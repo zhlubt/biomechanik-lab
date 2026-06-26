@@ -1,0 +1,165 @@
+{
+  "id": "absprung-grf",
+  "course": {
+    "id": "biomechanik",
+    "title": "Biomechanik"
+  },
+  "lesson": {
+    "id": "bodenreaktionskraefte",
+    "title": "Bodenreaktionskräfte beim Absprung"
+  },
+  "number": "03",
+  "title": "Was du siehst, was die Platte misst.",
+  "thumbnail": "img/thumb_messplatte.png",
+  "intro": "Im Video springt eine Person auf eine Kraftmessplatte. Beobachte Bild für Bild — und beschreibe danach in eigenen Worten, was die drei Kraftkomponenten der Bodenreaktionskraft (Fx, Fy, Fz) zeigen. Die KI gibt dir gezieltes Feedback zu jeder Formulierung.",
+  "status": "Übung aktiv · Video 00:06.800",
+  "media": [
+    {
+      "type": "video",
+      "label": "01 · Video-Analyse",
+      "src": "vid/absprungbrett.mp4",
+      "config": {
+        "durationSec": 6.8,
+        "fps": 60,
+        "phases": [
+          {
+            "label": "⏵ Start",
+            "t": 0.0
+          },
+          {
+            "label": "⤓ Anflug",
+            "t": 1.6
+          },
+          {
+            "label": "⚡ Landung",
+            "t": 2.6
+          },
+          {
+            "label": "↥ Maximum F_z",
+            "t": 3.3
+          },
+          {
+            "label": "↗ Abstoß",
+            "t": 4.5
+          }
+        ]
+      }
+    }
+  ],
+  "legend": [
+    {
+      "key": "x",
+      "label": "Fx · medio-lateral",
+      "color": "#d6256e",
+      "colorName": "pink",
+      "hint": "Kraft seitlich (links ↔ rechts) auf die Platte."
+    },
+    {
+      "key": "y",
+      "label": "Fy · antero-posterior",
+      "color": "#1aa56a",
+      "colorName": "grün",
+      "hint": "Kraft vorwärts ↔ rückwärts (Brems-/Schubrichtung)."
+    },
+    {
+      "key": "z",
+      "label": "Fz · vertikal",
+      "color": "#1098a5",
+      "colorName": "türkis",
+      "hint": "Vertikale Bodenreaktionskraft — meist die größte Amplitude."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Bodenreaktionskraft (GRF)",
+      "definition": "Die Kraft, die der Boden auf den Körper ausübt; Gegenkraft zur Krafteinwirkung des Körpers."
+    },
+    {
+      "term": "Amplitude",
+      "definition": "Höhe des Ausschlags · in N oder BW (Körpergewichte)."
+    },
+    {
+      "term": "Kraftstoß / Impuls",
+      "definition": "Fläche unter der Kurve, ∫F·dt."
+    },
+    {
+      "term": "Loading rate",
+      "definition": "Steigung der vertikalen Kraft beim Aufprall — wie hart die Landung ist."
+    }
+  ],
+  "guidance": {
+    "title": "So beschreibst du Messdaten sauber",
+    "steps": [
+      "Was zeigt das Video / welche Achse? (Größe + Einheit + Richtung)",
+      "Welche Phase der Bewegung ist sichtbar?",
+      "Wo liegt der Peak — und wann genau?",
+      "Was bedeutet das biomechanisch?"
+    ]
+  },
+  "task": "Beschreibe in eigenen Worten, was du im Video siehst und was die drei Kraftkomponenten (Fx, Fy, Fz) der Bodenreaktionskraft bedeuten. Wenn du fertig bist, klick „KI Feedback“ — du bekommst Fragen, keine Lösungen.",
+  "scaffold": [
+    {
+      "step": "Sehen",
+      "text": "Was zeigt das Video? Welche Bewegung, welche Phasen?"
+    },
+    {
+      "step": "Achsen benennen",
+      "text": "Fx medio-lateral, Fy antero-posterior, Fz vertikal."
+    },
+    {
+      "step": "Peak lesen",
+      "text": "Wann ist die vertikale Kraft am größten — und warum?"
+    },
+    {
+      "step": "Interpretieren",
+      "text": "Bremsen, Stoßen, Stabilisieren — was bedeutet das?"
+    }
+  ],
+  "feedbackCategories": [
+    {
+      "key": "x",
+      "label": "Fx · medio-lateral",
+      "color": "#d6256e"
+    },
+    {
+      "key": "y",
+      "label": "Fy · antero-posterior",
+      "color": "#1aa56a"
+    },
+    {
+      "key": "z",
+      "label": "Fz · vertikal",
+      "color": "#1098a5"
+    }
+  ],
+  "targetConcepts": [
+    "Bodenreaktionskraft",
+    "vertikale Kraft Fz",
+    "Bremskraft",
+    "Loading rate",
+    "Kraftstoß",
+    "Peak"
+  ],
+  "mediaDescription": "Video: eine Person springt/landet auf einer Kraftmessplatte. Drei Bodenreaktionskraft-Komponenten: Fx (medio-lateral, seitlich, klein), Fy (antero-posterior, kippt beim Aufprall kurz in den Bremsbereich), Fz (vertikal, größte Amplitude, Peak ~2–3 BW beim Abbremsen der Landung). Die Steigung des Fz-Anstiegs ist die Loading rate.",
+  "feedbackPrompt": "Du bist ein sokratischer Schreibcoach in der Trainingswissenschaft. Die/der Studierende beschreibt ein Video eines Absprungs/einer Landung auf einer Kraftmessplatte und die drei Bodenreaktionskraft-Komponenten. Markiere 2–4 Stellen, an denen die Beschreibung fachlich präziser werden könnte. Gib zu jeder Stelle eine FRAGE oder einen Hinweis — niemals die fertige Lösung. Ordne jede Marke einer Kategorie zu (x, y, z). Antworte ausschließlich als JSON {\"markers\":[{\"category\":\"…\",\"quote\":\"wörtliches Zitat aus dem Text\",\"question\":\"…\",\"nudge\":\"optionaler kurzer Hinweis\"}]}.",
+  "modelSolution": "Im Video landet/springt der Proband auf einer Kraftmessplatte. Fx (medio-lateral) bleibt klein — der Athlet landet weitgehend zentriert. Fy (antero-posterior) kippt beim Aufprall kurz in den Bremsbereich. Fz (vertikal) ist die größte Komponente; ihr Peak von rund 2–3 Körpergewichten markiert den Moment maximaler Belastung beim Abbremsen der Vertikalgeschwindigkeit unmittelbar nach der Landung. Die Steigung des Fz-Anstiegs (Loading rate) zeigt, wie hart der Aufprall ist; je steiler, desto größer die Belastung für den Bewegungsapparat.",
+  "demo": {
+    "studentText": "Im Video springt jemand auf eine Platte. Es gibt drei Kräfte. Die türkise (Fz) ist am größten, die wird beim Aufkommen ganz hoch. Die anderen beiden sind kleiner.",
+    "feedback": {
+      "markers": [
+        {
+          "category": "z",
+          "quote": "Die türkise (Fz) ist am größten, die wird beim Aufkommen ganz hoch.",
+          "question": "„Ganz hoch“ — wie hoch ungefähr (in Körpergewichten)? Und was genau bremst der Körper in diesem Moment ab, dass die vertikale Kraft so groß wird?",
+          "nudge": "Schau auf den Peak-Wert und den Begriff Loading rate."
+        },
+        {
+          "category": "y",
+          "quote": "Die anderen beiden sind kleiner.",
+          "question": "Das ist nur die Größe. Was MISST Fy (antero-posterior) eigentlich — und in welche Richtung zeigt sie beim Aufprall?",
+          "nudge": "Trenne Brems- und Schubrichtung."
+        }
+      ]
+    }
+  }
+}

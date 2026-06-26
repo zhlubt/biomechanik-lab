@@ -1,0 +1,189 @@
+{
+  "id": "cmj-vs-squatjump",
+  "course": {
+    "id": "biomechanik",
+    "title": "Biomechanik"
+  },
+  "lesson": {
+    "id": "anfangskraft",
+    "title": "Biomechanische Prinzipien · Anfangskraft"
+  },
+  "number": "04",
+  "title": "Warum springt man mit Ausholbewegung höher?",
+  "thumbnail": "img/thumb_squatjumb.png",
+  "intro": "Links zwei schematische Sprünge im direkten Vergleich: ein Counter-Movement Jump (mit Ausholbewegung) und ein Squat Jump (aus der gehaltenen Hocke, ohne Ausholen). Rechts laufen die zugehörigen vertikalen Bodenreaktionskräfte synchron mit. Beobachte Bild für Bild — und beschreibe danach, was den Unterschied ausmacht. Die KI gibt dir gezieltes Feedback zu jeder Formulierung.",
+  "status": "Übung aktiv · Aufnahmedauer 00:03.000",
+  "media": [
+    {
+      "type": "interactive",
+      "component": "JumpForceLab",
+      "label": "01 · Bewegungs- & Kraftanalyse",
+      "config": {
+        "durationSec": 3.0,
+        "fps": 30,
+        "phases": [
+          {
+            "label": "⏵ Start",
+            "t": 0.0
+          },
+          {
+            "label": "⤓ Ausholen (CMJ)",
+            "t": 0.85
+          },
+          {
+            "label": "⚡ Anfangskraft",
+            "t": 1.35
+          },
+          {
+            "label": "↗ Abstoß",
+            "t": 1.75
+          },
+          {
+            "label": "✈ Flug",
+            "t": 2.25
+          },
+          {
+            "label": "⬇ Landung",
+            "t": 2.75
+          }
+        ],
+        "note": "Kraftkurven F(t) und Posen als Funktionen — siehe fCMJ/fSJ/poseCMJ/poseSJ im Referenz-Mockup. In Phase 1 als Komponenten-Code portieren, nicht als Daten."
+      }
+    },
+    {
+      "type": "interactive",
+      "component": "KneeFrontal",
+      "label": "06 · Knie-Detail · Frontalebene",
+      "caption": "Rechtes Bein von vorn, synchron zur Animation oben. In der Landungsphase knickt das Knie nach innen (dynamischer Valgus) und der Zug auf das vordere Kreuzband steigt."
+    },
+    {
+      "type": "embed",
+      "label": "07 · Vom Schema zur echten Anatomie",
+      "description": "3D-Kniemodell zum Drehen (Kreuzbänder, Menisken, Bänder) — per QR-Code am Handy zu öffnen, keine App, kein Login.",
+      "url": "PLATZHALTER_3D_MODELL_URL",
+      "qr": true
+    }
+  ],
+  "legend": [
+    {
+      "key": "cmj",
+      "label": "Counter-Movement Jump",
+      "color": "#3a63d8",
+      "colorName": "blau",
+      "hint": "Mit Ausholbewegung: erst in die Hocke, dann nach oben. Die Kurve fällt zuerst unter das Körpergewicht."
+    },
+    {
+      "key": "sj",
+      "label": "Squat Jump",
+      "color": "#d98018",
+      "colorName": "orange",
+      "hint": "Aus der gehaltenen Hocke, ohne Ausholen. Die Kurve startet flach auf 1 Körpergewicht und steigt direkt an."
+    },
+    {
+      "key": "bw",
+      "label": "Körpergewicht (1 BW)",
+      "color": "#4a5160",
+      "colorName": "grau",
+      "hint": "Gestrichelte Bezugslinie. Im ruhigen Stand misst die Platte genau 1 BW."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Anfangskraft",
+      "definition": "Kraft, die durch das Abbremsen der Gegenbewegung (Ausholen) zu Beginn der Streckung bereits wirkt."
+    },
+    {
+      "term": "Negativer Kraftstoß",
+      "definition": "Die Phase, in der die Kraft unter 1 BW liegt (Körper wird nach unten beschleunigt)."
+    },
+    {
+      "term": "Kraftstoß / Impuls",
+      "definition": "Fläche unter der Kurve, ∫F·dt; bestimmt die Abfluggeschwindigkeit."
+    },
+    {
+      "term": "BW",
+      "definition": "Body Weight, Vielfaches des Körpergewichts als Krafteinheit."
+    }
+  ],
+  "guidance": {
+    "title": "So beschreibst du Messdaten sauber",
+    "steps": [
+      "Was zeigt das Diagramm? (Größe + Einheit + Achse)",
+      "Welche Phase der Bewegung ist sichtbar?",
+      "Wo unterscheiden sich die beiden Kurven — und wann genau?",
+      "Was bedeutet das biomechanisch?"
+    ]
+  },
+  "task": "Schreibe in eigenen Worten, was du siehst und worin sich die beiden Sprünge unterscheiden. Wenn du fertig bist, klick „KI Feedback“ — du bekommst kleine Marker an Stellen, an denen du präziser werden könntest. Du entscheidest, welche Hinweise du öffnest. Die KI gibt dir Fragen, keine Lösungen.",
+  "scaffold": [
+    {
+      "step": "Sehen",
+      "text": "Was zeigt die rechte Grafik? Welche Größe, welche Einheit, welche Achse?"
+    },
+    {
+      "step": "Phasen benennen",
+      "text": "Stand → Ausholen → Abbremsen → Abstoß → Flug → Landung."
+    },
+    {
+      "step": "Vergleichen",
+      "text": "Wo verläuft die blaue Kurve anders als die orange — und warum fehlt dem Squat Jump der Einbruch?"
+    },
+    {
+      "step": "Interpretieren",
+      "text": "Was bedeutet die Ausholbewegung für die Abfluggeschwindigkeit und die Sprunghöhe?"
+    }
+  ],
+  "feedbackCategories": [
+    {
+      "key": "cmj",
+      "label": "CMJ · blau",
+      "color": "#3a63d8"
+    },
+    {
+      "key": "sj",
+      "label": "Squat Jump · orange",
+      "color": "#d98018"
+    },
+    {
+      "key": "prinzip",
+      "label": "Ergebnis · Prinzip",
+      "color": "#1098a5"
+    }
+  ],
+  "targetConcepts": [
+    "negativer Kraftstoß",
+    "Anfangskraft",
+    "Kraftstoß / Impuls",
+    "Abfluggeschwindigkeit",
+    "Peak"
+  ],
+  "mediaDescription": "Links zwei Strichfiguren, die springen (CMJ und Squat Jump); rechts daneben zwei vertikale Bodenreaktionskraft-Kurven in BW. Die CMJ-Kurve (blau) fällt zuerst unter 1 BW (Ausholen/negativer Kraftstoß), schießt dann über einen hohen Peak (~2,4 BW). Die Squat-Jump-Kurve (orange) startet flach auf 1 BW ohne Einbruch und erreicht einen niedrigeren Peak (~2,0 BW). Die blaue Figur springt sichtbar höher.",
+  "feedbackPrompt": "Du bist ein sokratischer Schreibcoach in der Trainingswissenschaft. Die/der Studierende beschreibt in eigenen Worten den Vergleich von Counter-Movement Jump und Squat Jump anhand zweier Kraftkurven. Deine Aufgabe: Markiere 2–4 Stellen im Text, an denen die Beschreibung fachlich präziser werden könnte. Gib zu jeder Stelle eine FRAGE oder einen Hinweis, der zum Nachdenken anregt — niemals die fertige Formulierung oder Lösung. Ordne jede Marke einer Kategorie zu (cmj, sj, prinzip). Bleibe knapp und konkret. Antworte ausschließlich als JSON im Format {\"markers\":[{\"category\":\"…\",\"quote\":\"wörtliches Zitat aus dem Text\",\"question\":\"…\",\"nudge\":\"optionaler kurzer Hinweis\"}]}.",
+  "modelSolution": "Beide Kurven zeigen die vertikale Bodenreaktionskraft in Körpergewichten (BW). Im ruhigen Stand liegen beide bei 1 BW. Beim Counter-Movement Jump fällt die Kraft zunächst unter 1 BW: der Körper wird in der Ausholbewegung nach unten beschleunigt (negativer Kraftstoß). Anschließend bremst die Muskulatur diese Abwärtsbewegung ab — die Kraft schießt steil über 1 BW hinaus und erreicht einen hohen Peak (≈ 2,4 BW). Genau dieses Abbremsen der Gegenbewegung erzeugt die Anfangskraft: die Muskeln sind beim Beginn der Streckung bereits vorgespannt und voraktiviert. Der Squat Jump startet aus der gehaltenen Hocke, ohne Ausholen — ihm fehlt der Einbruch unter 1 BW, sein Peak bleibt niedriger (≈ 2,0 BW). Weil dem CMJ über den negativen Kraftstoß und die höhere Anfangskraft ein größerer Gesamt-Kraftstoß zur Verfügung steht, ist seine Abfluggeschwindigkeit höher — die blaue Figur bleibt länger in der Luft und springt sichtbar höher.",
+  "demo": {
+    "_comment": "Hartkodiertes Beispiel aus dem Mockup. In Phase 1 zum Rendern der Feedback-Marker ohne LLM. In Phase 2 wird feedback.markers durch einen echten LLM-Aufruf ersetzt.",
+    "studentText": "Ich sehe zwei Strichfiguren, die springen, und rechts daneben zwei Kraftkurven in BW.\nDie blaue Kurve geht am Anfang erst ein Stück nach unten, bevor sie nach oben schießt. Die orange Kurve macht das nicht, die geht einfach nur hoch.\nDie blaue Figur springt am Ende höher als die orange, aber warum das so ist weiß ich nicht genau.",
+    "feedback": {
+      "markers": [
+        {
+          "category": "cmj",
+          "quote": "Die blaue Kurve geht am Anfang erst ein Stück nach unten, bevor sie nach oben schießt.",
+          "question": "Du beschreibst die Form („geht nach unten“). Geh eine Ebene tiefer: Unter welchen Wert fällt die Kurve hier — und was bedeutet „unter 1 BW“ für die Bewegungsrichtung des Körpers? Welche Phase des Sprungs läuft in diesem Moment links bei der Figur ab? Es gibt einen Fachbegriff für diese Fläche unter der 1-BW-Linie. Welcher?",
+          "nudge": "Schau in die Achsen-Legende und ins Glossar („negativer Kraftstoß“) — dann eigene Worte."
+        },
+        {
+          "category": "sj",
+          "quote": "Die orange Kurve macht das nicht, die geht einfach nur hoch.",
+          "question": "„Macht das nicht“ benennt nur die Abwesenheit. Frag nach dem Warum: Aus welcher Ausgangsposition startet der Squat Jump — und was fehlt ihm dadurch? Was bedeutet das für seinen Peak im Vergleich zum CMJ?",
+          "nudge": "Trenne Beobachtung („kein Einbruch“) und Begründung („keine Ausholbewegung“)."
+        },
+        {
+          "category": "prinzip",
+          "quote": "Die blaue Figur springt am Ende höher als die orange, aber warum das so ist weiß ich nicht genau.",
+          "question": "„Weiß ich nicht“ ist ein ehrlicher Startpunkt. Verknüpfe jetzt Ursache und Wirkung: Wie hängt die Ausholbewegung mit der Abfluggeschwindigkeit zusammen? Über welche Größe (Stichwort Kraftstoß / Impuls) bekommt der CMJ mehr „mit auf den Weg“? Wie heißt das biomechanische Prinzip dahinter?",
+          "nudge": "Die Frage ist deine Schreibhilfe — nicht die Antwort."
+        }
+      ]
+    }
+  }
+}

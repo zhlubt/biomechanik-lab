@@ -1,0 +1,480 @@
+/* =========================================================
+   Biomechanik-Lab · Client (PHP-Variante)
+   Unterstützt zwei Medien-Arten über eine Transport-Abstraktion:
+   - "jumpforce": schematische Sprung-Animation + Kraftkurven (SVG)
+   - "video":     echtes Video mit Frame-Steuerung
+   Gemeinsam: Editor + sokratisches KI-Feedback + (für Video) Zeitstempel.
+   Datengetrieben über window.EXERCISE (ohne feedbackPrompt).
+========================================================= */
+(function () {
+  "use strict";
+  var EX = window.EXERCISE || {};
+  var MEDIA = EX.media || { kind: "jumpforce" };
+  var D = (MEDIA.durationSec || EX.durationSec || 3.0);
+  var FPS = (MEDIA.fps || EX.fps || 30);
+  var COL = { cmj: "#3a63d8", sj: "#d98018" };
+
+  function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+
+  /* ---------- Zeitformat ---------- */
+  function fmt(x) {
+    if (!isFinite(x)) x = 0;
+    var m = String(Math.floor(x / 60)).padStart(2, "0"), s = String(Math.floor(x % 60)).padStart(2, "0"), ms = String(Math.floor((x % 1) * 1000)).padStart(3, "0");
+    return m + ":" + s + "." + ms;
+  }
+  function fmtShort(x) {
+    if (!isFinite(x)) x = 0;
+    var s = Math.floor(x % 60), ms = Math.floor((x % 1) * 100);
+    return Math.floor(x / 60) + ":" + String(s).padStart(2, "0") + "." + String(ms).padStart(2, "0");
+  }
+
+  /* =========================================================
+     TRANSPORT (gemeinsame Steuer-Schnittstelle)
+  ========================================================= */
+  var scrub = document.getElementById("scrub");
+  var timeEl = document.getElementById("time");
+  var playLabel = document.getElementById("playLabel");
+  var playIcon = document.getElementById("playIcon");
+
+  function updateUI(transport) {
+    var t = transport.getTime(), dur = transport.getDuration();
+    if (timeEl) timeEl.textContent = fmt(t) + " / " + fmt(dur);
+    if (scrub) scrub.style.setProperty("--pct", (dur ? (t / dur) * 100 : 0) + "%");
+    if (playLabel) playLabel.textContent = transport.isPlaying() ? "Pause" : "Abspielen";
+    if (playIcon) playIcon.setAttribute("d", transport.isPlaying() ? "M6 5h4v14H6zM14 5h4v14h-4z" : "M8 5v14l11-7z");
+  }
+
+  /* ---------- Video-Transport ---------- */
+  function makeVideoTransport() {
+    var vid = document.getElementById("vid");
+    var self = {
+      getTime: function () { return vid.currentTime || 0; },
+      getDuration: function () { return (vid.duration && isFinite(vid.duration)) ? vid.duration : D; },
+      getFps: function () { return FPS; },
+      isPlaying: function () { return !vid.paused; },
+      play: function () { vid.play(); },
+      pause: function () { vid.pause(); },
+      toggle: function () { vid.paused ? vid.play() : vid.pause(); },
+      setTime: function (t) { vid.currentTime = clamp(t, 0, self.getDuration()); },
+      step: function (dir) { vid.pause(); self.setTime(self.getTime() + dir / FPS); },
+      nudge: function (sec) { vid.pause(); self.setTime(self.getTime() + sec); },
+      setRate: function (r) { vid.playbackRate = r; },
+    };
+    ["timeupdate", "play", "pause", "seeked", "loadedmetadata"].forEach(function (ev) {
+      vid.addEventListener(ev, function () { updateUI(self); });
+    });
+    return self;
+  }
+
+  /* ---------- JumpForce-Transport (SVG-Animation) ---------- */
+  function makeJumpTransport() {
+    var t = 0, playing = false, rate = 1, lastTs = null;
+    var stage = document.getElementById("stage");
+    var kneeSvg = document.getElementById("knee");
+
+    /* --- Mathematik --- */
+    function smooth(a, b, x) { var u = clamp((x - a) / (b - a), 0, 1); return u * u * (3 - 2 * u); }
+    function fCMJ(tt) { tt = clamp(tt, 0, D);
+      if (tt < 0.55) return 1.0;
+      if (tt < 1.15) { var u = (tt - 0.55) / 0.6; return 1 - 0.46 * Math.sin(Math.PI * u); }
+      if (tt < 1.55) return 1 + 1.45 * smooth(1.15, 1.55, tt);
+      if (tt < 1.95) return 2.45 * (1 - smooth(1.55, 1.95, tt));
+      if (tt < 2.62) return 0;
+      if (tt < 3.0) { var g = 3.2 * Math.exp(-Math.pow((tt - 2.7) / 0.1, 2)); return g + smooth(2.78, 3.0, tt) * (1 - Math.exp(-Math.pow((tt - 2.7) / 0.1, 2))); }
+      return 1.0; }
+    function fSJ(tt) { tt = clamp(tt, 0, D);
+      if (tt < 1.15) return 1.0;
+      if (tt < 1.55) return 1 + 1.0 * smooth(1.15, 1.55, tt);
+      if (tt < 1.95) return 2.0 * (1 - smooth(1.55, 1.95, tt));
+      if (tt < 2.5) return 0;
+      if (tt < 3.0) { var g = 2.7 * Math.exp(-Math.pow((tt - 2.6) / 0.1, 2)); return g + smooth(2.68, 3.0, tt) * (1 - Math.exp(-Math.pow((tt - 2.6) / 0.1, 2))); }
+      return 1.0; }
+    function poseCMJ(tt) { tt = clamp(tt, 0, D); var drop = 0, air = 0;
+      if (tt < 0.55) drop = 0; else if (tt < 1.15) drop = smooth(0.55, 1.15, tt); else if (tt < 1.55) drop = 1;
+      else if (tt < 1.95) drop = 1 - smooth(1.55, 1.95, tt);
+      else if (tt < 2.62) { drop = 0; air = Math.sin((Math.PI * (tt - 1.95)) / 0.67); }
+      else { air = 0; drop = 0.6 * Math.sin(Math.PI * clamp((tt - 2.62) / 0.38, 0, 1)); } return { drop: drop, air: air }; }
+    function poseSJ(tt) { tt = clamp(tt, 0, D); var drop = 1, air = 0;
+      if (tt < 1.15) drop = 1; else if (tt < 1.95) drop = 1 - smooth(1.15, 1.95, tt);
+      else if (tt < 2.5) { drop = 0; air = 0.78 * Math.sin((Math.PI * (tt - 1.95)) / 0.55); }
+      else { air = 0; drop = 0.6 * Math.sin(Math.PI * clamp((tt - 2.5) / 0.5, 0, 1)); } return { drop: drop, air: air }; }
+
+    var NS = "http://www.w3.org/2000/svg";
+    function el(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+    var figArea = { x: 18, y: 30, w: 300, h: 400 }, chart = { x: 360, y: 40, w: 330, h: 330 }, Fmax = 3.4;
+    function cx(tt) { return chart.x + (clamp(tt, 0, D) / D) * chart.w; }
+    function cy(F) { return chart.y + chart.h - (clamp(F, 0, Fmax) / Fmax) * chart.h; }
+    var cmjPts = [], sjPts = [];
+    (function () { var N = 240; for (var i = 0; i <= N; i++) { var tt = (i / N) * D; cmjPts.push([cx(tt), cy(fCMJ(tt))]); sjPts.push([cx(tt), cy(fSJ(tt))]); } })();
+    function pathFrom(pts, upto) { var d = ""; for (var i = 0; i < pts.length; i++) { if (upto != null && pts[i][0] > upto) break; d += (i === 0 ? "M" : "L") + pts[i][0].toFixed(1) + " " + pts[i][1].toFixed(1) + " "; } return d.trim(); }
+    function setAttr(id, a, v) { var e = document.getElementById(id); if (e) e.setAttribute(a, v); }
+    function dipPath(px) { var y1 = cy(1), d = "", open = false;
+      for (var i = 0; i < cmjPts.length; i++) { var time = (i / (cmjPts.length - 1)) * D, F = fCMJ(time), x = cmjPts[i][0]; if (x > px) break;
+        if (F < 1 && time < 1.2) { if (!open) { d += "M" + x.toFixed(1) + " " + y1.toFixed(1) + " "; open = true; } d += "L" + x.toFixed(1) + " " + cy(F).toFixed(1) + " "; }
+        else if (open) { d += "L" + x.toFixed(1) + " " + y1.toFixed(1) + " Z "; open = false; } }
+      if (open) d += "L" + Math.min(px, chart.x + chart.w).toFixed(1) + " " + y1.toFixed(1) + " Z"; return d; }
+
+    function buildStatic() {
+      if (!stage) return;
+      stage.appendChild(el("rect", { x: chart.x - 26, y: chart.y - 26, width: chart.w + 52, height: chart.h + 64, rx: 10, fill: "#0b0e14", stroke: "#1d2531" }));
+      for (var bw = 0; bw <= 3; bw++) { var y = cy(bw);
+        stage.appendChild(el("line", { x1: chart.x, y1: y, x2: chart.x + chart.w, y2: y, stroke: bw === 1 ? "#5a6677" : "#222b39", "stroke-width": bw === 1 ? 1.4 : 1, "stroke-dasharray": bw === 1 ? "5 4" : "2 5" }));
+        var lab = el("text", { x: chart.x - 8, y: y + 4, "text-anchor": "end", fill: "#7d8a9c", "font-size": 12, "font-family": "monospace" }); lab.textContent = bw + " BW"; stage.appendChild(lab); }
+      var yt = el("text", { x: chart.x - 30, y: chart.y - 12, fill: "#9aa6b6", "font-size": 12, "font-weight": 600 }); yt.textContent = "Fz (vertikale Bodenreaktionskraft)"; stage.appendChild(yt);
+      var xt = el("text", { x: chart.x + chart.w, y: chart.y + chart.h + 34, "text-anchor": "end", fill: "#7d8a9c", "font-size": 12 }); xt.textContent = "Zeit →"; stage.appendChild(xt);
+      stage.appendChild(el("path", { id: "dipFill", fill: "rgba(58,99,216,0.22)", stroke: "none" }));
+      stage.appendChild(el("path", { id: "sjFull", fill: "none", stroke: COL.sj, "stroke-width": 1.6, opacity: 0.28 }));
+      stage.appendChild(el("path", { id: "cmjFull", fill: "none", stroke: COL.cmj, "stroke-width": 1.6, opacity: 0.28 }));
+      stage.appendChild(el("path", { id: "sjLine", fill: "none", stroke: COL.sj, "stroke-width": 3, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+      stage.appendChild(el("path", { id: "cmjLine", fill: "none", stroke: COL.cmj, "stroke-width": 3, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+      stage.appendChild(el("line", { id: "playhead", y1: chart.y, y2: chart.y + chart.h, stroke: "#aeb8c6", "stroke-width": 1, "stroke-dasharray": "3 3" }));
+      stage.appendChild(el("circle", { id: "dotSJ", r: 5, fill: COL.sj, stroke: "#0b0e14", "stroke-width": 1.5 }));
+      stage.appendChild(el("circle", { id: "dotCMJ", r: 5, fill: COL.cmj, stroke: "#0b0e14", "stroke-width": 1.5 }));
+      var lx = chart.x + chart.w - 150;
+      stage.appendChild(el("rect", { x: lx, y: chart.y + 6, width: 144, height: 46, rx: 7, fill: "rgba(10,14,20,.7)", stroke: "#222b39" }));
+      stage.appendChild(el("line", { x1: lx + 10, y1: chart.y + 20, x2: lx + 30, y2: chart.y + 20, stroke: COL.cmj, "stroke-width": 3 }));
+      var l1 = el("text", { x: lx + 36, y: chart.y + 24, fill: "#cdd6e2", "font-size": 12 }); l1.textContent = "CMJ"; stage.appendChild(l1);
+      stage.appendChild(el("line", { x1: lx + 10, y1: chart.y + 38, x2: lx + 30, y2: chart.y + 38, stroke: COL.sj, "stroke-width": 3 }));
+      var l2 = el("text", { x: lx + 36, y: chart.y + 42, fill: "#cdd6e2", "font-size": 12 }); l2.textContent = "Squat Jump"; stage.appendChild(l2);
+      stage.appendChild(el("g", { id: "figCMJ" })); stage.appendChild(el("g", { id: "figSJ" }));
+      var gy = figArea.y + figArea.h - 20;
+      stage.appendChild(el("line", { x1: figArea.x, y1: gy, x2: figArea.x + figArea.w, y2: gy, stroke: "#39455a", "stroke-width": 2 }));
+      var c1 = el("text", { x: figArea.x + 78, y: gy + 30, "text-anchor": "middle", fill: COL.cmj, "font-size": 14, "font-weight": 700 }); c1.textContent = "CMJ"; stage.appendChild(c1);
+      var c2 = el("text", { x: figArea.x + 220, y: gy + 30, "text-anchor": "middle", fill: COL.sj, "font-size": 14, "font-weight": 700 }); c2.textContent = "Squat Jump"; stage.appendChild(c2);
+    }
+    function drawFigure(gid, cxFoot, pose, color) {
+      var g = document.getElementById(gid); if (!g) return; g.innerHTML = "";
+      var gy = figArea.y + figArea.h - 20, airPx = pose.air * 150, footY = gy - airPx;
+      var legLen = 120 - pose.drop * 58, hipY = footY - legLen, torso = 60 - pose.drop * 8, shoulderY = hipY - torso;
+      var headR = 12, headY = shoulderY - headR - 6, kneeOut = pose.drop * 20, kneeY = (hipY + footY) / 2 - pose.drop * 6;
+      var st = { stroke: color, "stroke-width": 4, "stroke-linecap": "round", fill: "none" };
+      [-9, 9].forEach(function (dx) { var kneeX = cxFoot + dx + kneeOut * (dx < 0 ? -0.2 : 0.2);
+        g.appendChild(el("line", Object.assign({ x1: cxFoot + dx * 0.6, y1: hipY, x2: kneeX + dx, y2: kneeY }, st)));
+        g.appendChild(el("line", Object.assign({ x1: kneeX + dx, y1: kneeY, x2: cxFoot + dx, y2: footY }, st))); });
+      g.appendChild(el("line", Object.assign({ x1: cxFoot, y1: hipY, x2: cxFoot, y2: shoulderY }, st)));
+      var armUp = pose.air > 0.05 ? 1 : 0, handY = armUp ? shoulderY - 34 : shoulderY + 30 + pose.drop * 14, handX = armUp ? 16 : 22;
+      [-1, 1].forEach(function (s) { g.appendChild(el("line", Object.assign({ x1: cxFoot, y1: shoulderY, x2: cxFoot + s * handX, y2: handY }, st))); });
+      g.appendChild(el("circle", { cx: cxFoot, cy: headY, r: headR, stroke: color, "stroke-width": 4, fill: "#0e1118" }));
+      g.appendChild(el("ellipse", { cx: cxFoot, cy: gy + 2, rx: 22 - airPx * 0.05, ry: 4, fill: "#000", opacity: clamp(0.35 - airPx * 0.0016, 0.05, 0.35) }));
+    }
+    function lerpCol(a, b, u) { function p(i) { return Math.round(a[i] + (b[i] - a[i]) * clamp(u, 0, 1)); } return "rgb(" + p(0) + "," + p(1) + "," + p(2) + ")"; }
+    function drawKnee(tt) {
+      if (!kneeSvg) return; kneeSvg.innerHTML = "";
+      var pose = poseCMJ(tt), flex = pose.drop, landing = tt >= 2.55, load = landing ? clamp((fCMJ(tt) - 1) / 2.2, 0, 1) : 0;
+      var hipX = 180, hipY = 48, ankleX = 180, ankleY = 272, footY = 290, kneeY = 170 + flex * 4, kneeX = hipX - load * 48;
+      var col = lerpCol([26, 165, 106], [201, 53, 53], load);
+      var G = function (tag, a) { kneeSvg.appendChild(el(tag, a)); };
+      var lab = function (x, y, txt, c, anchor) { var e = el("text", { x: x, y: y, fill: c || "#9aa6b6", "font-size": 12 }); if (anchor) e.setAttribute("text-anchor", anchor); e.textContent = txt; kneeSvg.appendChild(e); };
+      G("line", { x1: ankleX, y1: footY, x2: ankleX, y2: hipY + 6, stroke: "#2a3446", "stroke-width": 1.5, "stroke-dasharray": "4 5" });
+      if (load > 0.02) { var len = 28 + load * 78, tipY = footY + 16 - len; G("line", { x1: ankleX, y1: footY + 16, x2: ankleX, y2: tipY, stroke: "#e6c34a", "stroke-width": 3, "stroke-linecap": "round" }); G("path", { d: "M" + (ankleX - 6) + " " + (tipY + 9) + " L" + ankleX + " " + tipY + " L" + (ankleX + 6) + " " + (tipY + 9) + " Z", fill: "#e6c34a" }); }
+      var bone = { stroke: "#cdd6e2", "stroke-width": 11, "stroke-linecap": "round", fill: "none" };
+      G("line", Object.assign({ x1: hipX, y1: hipY, x2: kneeX, y2: kneeY }, bone));
+      G("line", Object.assign({ x1: kneeX, y1: kneeY, x2: ankleX, y2: ankleY }, bone));
+      G("line", { x1: kneeX + 8, y1: kneeY + 12, x2: ankleX + 9, y2: ankleY - 4, stroke: "#9aa6b6", "stroke-width": 4, "stroke-linecap": "round" });
+      G("line", { x1: ankleX - 20, y1: footY, x2: ankleX + 26, y2: footY, stroke: "#cdd6e2", "stroke-width": 9, "stroke-linecap": "round" });
+      G("circle", { cx: kneeX - 6, cy: kneeY, r: 8, fill: "#e4e9f1" }); G("circle", { cx: kneeX + 6, cy: kneeY, r: 8, fill: "#e4e9f1" });
+      var aw = 4 + load * 4;
+      if (load > 0.25) G("line", { x1: kneeX - 7, y1: kneeY + 9, x2: kneeX + 7, y2: kneeY - 9, stroke: col, "stroke-width": aw + 8, "stroke-linecap": "round", opacity: 0.25 });
+      G("line", { x1: kneeX - 7, y1: kneeY + 9, x2: kneeX + 7, y2: kneeY - 9, stroke: col, "stroke-width": aw, "stroke-linecap": "round" });
+      G("circle", { cx: kneeX, cy: kneeY, r: 5, fill: "none", stroke: (landing && load > 0.3) ? col : "#7d8a9c", "stroke-width": 2 });
+      lab(hipX + 12, hipY + 28, "Femur"); lab(ankleX + 16, ankleY - 2, "Tibia");
+      G("line", { x1: kneeX - 30, y1: kneeY, x2: kneeX - 9, y2: kneeY, stroke: col, "stroke-width": 1 });
+      lab(kneeX - 34, kneeY + 4, "VKB", col, "end");
+      var gx = 330, gy0 = 72, gh = 150;
+      G("rect", { x: gx, y: gy0, width: 14, height: gh, rx: 7, fill: "#1a2230", stroke: "#2a3446" });
+      G("rect", { x: gx, y: gy0 + gh - gh * load, width: 14, height: gh * load, rx: 7, fill: col });
+      lab(gx + 7, gy0 - 8, "VKB-Last", null, "middle");
+      var cap = "Flug", cc = "#7d8a9c";
+      if (tt < 0.55) cap = "Stand — Knie über dem Fuß"; else if (tt < 1.95) cap = "Absprung — Streckung (Triple Extension)";
+      else if (tt < 2.55) cap = "Flug"; else if (load > 0.45) { cap = "Landung: dynamischer Valgus → VKB-Last hoch"; cc = "#d76b6b"; } else { cap = "Landung — abfangen"; cc = "#e6c34a"; }
+      lab(180, 312, cap, cc, "middle");
+    }
+    function render() {
+      var px = cx(t);
+      setAttr("cmjFull", "d", pathFrom(cmjPts, null)); setAttr("sjFull", "d", pathFrom(sjPts, null));
+      setAttr("cmjLine", "d", pathFrom(cmjPts, px)); setAttr("sjLine", "d", pathFrom(sjPts, px));
+      setAttr("dipFill", "d", dipPath(px));
+      setAttr("playhead", "x1", px); setAttr("playhead", "x2", px);
+      setAttr("dotCMJ", "cx", px); setAttr("dotCMJ", "cy", cy(fCMJ(t)));
+      setAttr("dotSJ", "cx", px); setAttr("dotSJ", "cy", cy(fSJ(t)));
+      drawFigure("figCMJ", figArea.x + 78, poseCMJ(t), COL.cmj);
+      drawFigure("figSJ", figArea.x + 220, poseSJ(t), COL.sj);
+      drawKnee(t);
+    }
+    var self = {
+      getTime: function () { return t; }, getDuration: function () { return D; }, getFps: function () { return FPS; },
+      isPlaying: function () { return playing; },
+      setTime: function (nt) { t = clamp(nt, 0, D); render(); updateUI(self); },
+      step: function (dir) { self.pause(); self.setTime(t + dir / FPS); },
+      nudge: function (sec) { self.pause(); self.setTime(t + sec); },
+      setRate: function (r) { rate = r; },
+      play: function () { if (playing) return; playing = true; lastTs = null; updateUI(self); requestAnimationFrame(loop); },
+      pause: function () { playing = false; updateUI(self); },
+      toggle: function () { playing ? self.pause() : self.play(); },
+    };
+    function loop(ts) { if (!playing) return; if (lastTs == null) lastTs = ts; var dt = (ts - lastTs) / 1000; lastTs = ts; t += dt * rate; if (t >= D) { t = D; render(); self.pause(); return; } render(); updateUI(self); requestAnimationFrame(loop); }
+    buildStatic(); render();
+    return self;
+  }
+
+  /* ---------- Null-Transport (3D-Modell: keine Zeitachse) ---------- */
+  function makeNullTransport() {
+    var self = {
+      getTime: function () { return 0; }, getDuration: function () { return 0; }, getFps: function () { return FPS; },
+      isPlaying: function () { return false; },
+      play: function () {}, pause: function () {}, toggle: function () {},
+      setTime: function () {}, step: function () {}, nudge: function () {}, setRate: function () {},
+    };
+    return self;
+  }
+
+  var transport = (MEDIA.kind === "video") ? makeVideoTransport()
+    : (MEDIA.kind === "model3d") ? makeNullTransport()
+    : makeJumpTransport();
+  updateUI(transport);
+
+  /* ---------- Steuerung verdrahten ---------- */
+  function on(id, ev, fn) { var e = document.getElementById(id); if (e) e.addEventListener(ev, fn); }
+  on("playBtn", "click", function () { transport.toggle(); });
+  on("prevFrame", "click", function () { transport.step(-1); });
+  on("nextFrame", "click", function () { transport.step(1); });
+  Array.prototype.forEach.call(document.querySelectorAll(".speed button"), function (b) {
+    b.addEventListener("click", function () { document.querySelectorAll(".speed button").forEach(function (x) { x.classList.remove("on"); }); b.classList.add("on"); transport.setRate(parseFloat(b.dataset.rate)); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("#phases button"), function (b) {
+    b.addEventListener("click", function () { transport.pause(); transport.setTime(parseFloat(b.dataset.jump)); });
+  });
+  if (scrub) {
+    var dragging = false, resume = false;
+    function seekFromEvent(e) { var r = scrub.getBoundingClientRect(); var x = e.touches ? e.touches[0].clientX : e.clientX; transport.setTime(clamp((x - r.left) / r.width, 0, 1) * transport.getDuration()); }
+    scrub.addEventListener("pointerdown", function (e) { dragging = true; scrub.classList.add("dragging"); scrub.setPointerCapture(e.pointerId); resume = transport.isPlaying(); transport.pause(); seekFromEvent(e); });
+    scrub.addEventListener("pointermove", function (e) { if (dragging) seekFromEvent(e); });
+    function endScrub(e) { if (!dragging) return; dragging = false; scrub.classList.remove("dragging"); try { scrub.releasePointerCapture(e.pointerId); } catch (_) {} if (resume) transport.play(); }
+    scrub.addEventListener("pointerup", endScrub); scrub.addEventListener("pointercancel", endScrub);
+  }
+  document.addEventListener("keydown", function (e) {
+    if (document.activeElement && document.activeElement.isContentEditable) return;
+    if (e.code === "Space") { e.preventDefault(); transport.toggle(); }
+    if (e.code === "ArrowLeft") transport.step(-1);
+    if (e.code === "ArrowRight") transport.step(1);
+    if (e.key === ",") transport.nudge(-0.25);
+    if (e.key === ".") transport.nudge(0.25);
+    var rates = { "1": 0.25, "2": 0.5, "3": 1, "4": 2 };
+    if (rates[e.key]) { transport.setRate(rates[e.key]); document.querySelectorAll(".speed button").forEach(function (b) { b.classList.toggle("on", parseFloat(b.dataset.rate) === rates[e.key]); }); }
+  });
+
+  /* =========================================================
+     FORTSCHRITT (localStorage)
+  ========================================================= */
+  function markProgress(field) {
+    if (!EX.locator) return;
+    var exId = EX.locator.course + "/" + EX.locator.lesson + "/" + EX.locator.exercise;
+    var p = {};
+    try { p = JSON.parse(localStorage.getItem("biomech_progress") || "{}"); } catch (e) {}
+    p[exId] = p[exId] || {};
+    p[exId][field] = Date.now();
+    try { localStorage.setItem("biomech_progress", JSON.stringify(p)); } catch (e) {}
+  }
+  markProgress("opened");
+
+  /* =========================================================
+     EDITOR + KI-FEEDBACK (+ Zeitstempel für Video)
+  ========================================================= */
+  var demo = EX.demo || { studentText: "", feedback: { markers: [] } };
+  var cats = EX.categories || [];
+  var colorByCat = {}, labelByCat = {};
+  cats.forEach(function (c) { colorByCat[c.key] = c.color; labelByCat[c.key] = c.label; });
+
+  var editor = document.getElementById("editor");
+  var aiBtn = document.getElementById("aiBtn"), aiBtnLabel = document.getElementById("aiBtnLabel");
+  var wordCountEl = document.getElementById("wordCount"), hintBanner = document.getElementById("hintBanner");
+  var editorShell = document.getElementById("editorShell"), liveLabel = document.getElementById("liveLabel");
+  var tsNow = document.getElementById("tsNow");
+
+  var phase = "writing", typeTimer = null, typed = 0, typingDone = false;
+  var markers = [], submittedText = "", markersHidden = false, demoText = demo.studentText || "";
+
+  function escapeHTML(s) { return s.replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }).replace(/\n/g, "<br>"); }
+  function countWords(s) { return s.trim() ? s.trim().split(/\s+/).length : 0; }
+  function setWordCount(n) { if (wordCountEl) wordCountEl.textContent = n + " Wörter"; }
+
+  function typeOut() {
+    if (phase !== "writing" || typingDone) return;
+    if (typed >= demoText.length) { editor.innerHTML = escapeHTML(demoText); setWordCount(countWords(demoText)); typingDone = true; editor.setAttribute("contenteditable", "true"); if (aiBtn) aiBtn.disabled = false; if (liveLabel) liveLabel.textContent = "live · du schreibst"; return; }
+    var step = 2, partial = demoText.slice(0, typed + step);
+    editor.innerHTML = escapeHTML(partial) + '<span class="caret"></span>'; setWordCount(countWords(partial));
+    var last = demoText[Math.min(typed + step - 1, demoText.length - 1)], delay = 10 + Math.random() * 16;
+    if (".,".indexOf(last) >= 0) delay = 90 + Math.random() * 70; if (last === "\n") delay = 140; if (demoText.slice(typed, typed + 5) === "aber ") delay = 260;
+    typed += step; typeTimer = setTimeout(typeOut, delay);
+  }
+  function startTyping() {
+    clearTimeout(typeTimer); phase = "writing"; typed = 0; typingDone = false; markers = []; submittedText = "";
+    editor.removeAttribute("contenteditable"); editor.innerHTML = "";
+    if (aiBtn) aiBtn.disabled = true; if (hintBanner) hintBanner.className = "hint-banner";
+    if (liveLabel) liveLabel.textContent = "live · Studierende:r tippt"; hideTip(true); typeOut();
+  }
+  function skipTyping() {
+    clearTimeout(typeTimer); editor.innerHTML = escapeHTML(demoText); setWordCount(countWords(demoText));
+    typed = demoText.length; typingDone = true; editor.setAttribute("contenteditable", "true");
+    if (aiBtn) aiBtn.disabled = false; if (liveLabel) liveLabel.textContent = "live · du schreibst";
+  }
+  on("skipType", "click", skipTyping); on("replayType", "click", startTyping); on("resetBtn", "click", startTyping);
+  if (editor) editor.addEventListener("input", function () { if (phase === "writing") setWordCount(countWords(editor.innerText)); });
+
+  /* ---- Zeitstempel einfügen (nur Video) ---- */
+  function insertAtCursor(text) {
+    editor.focus();
+    var sel = window.getSelection();
+    if (sel && sel.rangeCount && editor.contains(sel.anchorNode)) {
+      var range = sel.getRangeAt(0); range.deleteContents();
+      var node = document.createTextNode(text); range.insertNode(node);
+      range.setStartAfter(node); range.setEndAfter(node); sel.removeAllRanges(); sel.addRange(range);
+    } else {
+      editor.appendChild(document.createTextNode(text));
+    }
+    if (phase === "writing") setWordCount(countWords(editor.innerText));
+  }
+  on("tsInsert", "click", function () {
+    if (!typingDone) skipTyping();
+    insertAtCursor(" [" + fmtShort(transport.getTime()) + "] ");
+  });
+  // Laufende Zeit im Zeitstempel-Balken anzeigen
+  if (tsNow) {
+    var oldUpdate = updateUI;
+    setInterval(function () { tsNow.textContent = fmtShort(transport.getTime()); }, 120);
+  }
+
+  /* ---- Feedback ---- */
+  var cooldownTimer = null;
+  function loginHref() { return "konto.php?next=" + encodeURIComponent(location.pathname.split("/").pop() + location.search); }
+
+  function startCooldown(secs) {
+    secs = Math.max(1, parseInt(secs, 10) || 60);
+    if (cooldownTimer) clearInterval(cooldownTimer);
+    if (aiBtn) aiBtn.disabled = true;
+    function tick() {
+      if (secs <= 0) { clearInterval(cooldownTimer); cooldownTimer = null; if (aiBtn) aiBtn.disabled = false; if (aiBtnLabel) aiBtnLabel.textContent = "KI Feedback"; return; }
+      var m = Math.floor(secs / 60), s = secs % 60;
+      if (aiBtnLabel) aiBtnLabel.textContent = "Abkühlen … " + (m > 0 ? m + ":" + String(s).padStart(2, "0") : s + " s");
+      secs--;
+    }
+    tick(); cooldownTimer = setInterval(tick, 1000);
+  }
+
+  function requestFeedback() {
+    if (EX.loggedIn === false) { showLoginNeeded(); return; }
+    if (cooldownTimer) return; // läuft noch ein Abkühl-Timer
+    var text = (editor.innerText || "").trim();
+    if (text.length < 10) { showError("Bitte schreibe zuerst ein paar Sätze."); return; }
+    if (text.length > 6000) { showError("Dein Text ist zu lang (max. 6000 Zeichen)."); return; }
+    if (aiBtn) aiBtn.disabled = true; if (aiBtnLabel) aiBtnLabel.textContent = "KI denkt nach …"; if (liveLabel) liveLabel.textContent = "KI denkt nach …";
+    fetch("feedback.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({}, EX.locator, { studentText: text })) })
+      .then(function (res) { return res.json().then(function (j) { return { ok: res.ok, status: res.status, j: j }; }); })
+      .then(function (r) {
+        if (r.status === 401) { showLoginNeeded(); return; }
+        if (r.status === 429) { var ra = (r.j && r.j.retry_after) || 60; startCooldown(ra);
+          showBanner('⏳ Bitte kurz abkühlen — du kannst in <b>' + ra + ' Sekunden</b> wieder Feedback abrufen. (Schutz vor Überlastung)'); return; }
+        if (!r.ok) throw new Error((r.j && r.j.error) || "Serverfehler");
+        submittedText = text; markers = (r.j && r.j.markers) || []; phase = "feedback"; renderFeedback(); markProgress("feedback"); showSaveState(!!(r.j && r.j.saved));
+        startCooldown(60); // nach erfolgreichem Feedback gilt dasselbe 1-Minuten-Limit
+        if (hintBanner) hintBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      })
+      .catch(function (e) { showError(e.message || "Feedback fehlgeschlagen."); })
+      .finally(function () { if (!cooldownTimer && aiBtnLabel) aiBtnLabel.textContent = "KI Feedback"; if (liveLabel && phase !== "feedback") liveLabel.textContent = "live · du schreibst"; });
+  }
+  on("aiBtn", "click", requestFeedback);
+
+  function showBanner(html) {
+    if (!hintBanner) return;
+    hintBanner.className = "hint-banner show";
+    hintBanner.innerHTML = '<div class="row"><span class="icon">ℹ️</span><span>' + html + "</span></div>";
+  }
+  function showLoginNeeded() {
+    showBanner('Um KI-Feedback zu bekommen, starte bitte kurz (nur dein Name): <a href="' + loginHref() + '">▶ Loslegen</a>. Das schützt die Plattform vor Missbrauch und speichert deine Abgaben.');
+  }
+
+  /* Speicher-Status nach dem Feedback anzeigen (Phase 4). */
+  function showSaveState(saved) {
+    if (!hintBanner) return;
+    var note = document.createElement("div");
+    note.className = "save-state";
+    if (saved) {
+      note.innerHTML = '✓ Abgabe gespeichert. <a href="meine-abgaben.php">Meine Abgaben ansehen</a>';
+    } else if (EX.loggedIn === false) {
+      var here = location.pathname.split("/").pop() + location.search;
+      note.innerHTML = 'ℹ️ Noch nicht gestartet — diese Abgabe wird <b>nicht gespeichert</b>. <a href="konto.php?next=' + encodeURIComponent(here) + '">Name eingeben &amp; speichern</a> (dauert 5 Sekunden).';
+    } else { return; }
+    hintBanner.appendChild(note);
+  }
+
+  /* ---- Tooltip + Marker-Rendering ---- */
+  var floatTip = document.createElement("div");
+  floatTip.className = "float-tip"; floatTip.setAttribute("role", "tooltip");
+  floatTip.innerHTML = '<div class="inner"></div><div class="arrow"></div>';
+  document.body.appendChild(floatTip);
+  var tipInner = floatTip.querySelector(".inner"), tipArrow = floatTip.querySelector(".arrow");
+  var activeChip = null, tipPinned = false;
+  function showTipFor(chip) {
+    activeChip = chip; var idx = +chip.dataset.idx, m = markers[idx], color = colorByCat[m.category] || "var(--ink-mute)";
+    var num = chip.querySelector(".num") ? chip.querySelector(".num").textContent : "";
+    tipInner.innerHTML = '<div class="label" style="color:' + color + '"><span class="sw" style="background:' + color + '"></span>Hinweis ' + num + " · " + escapeHTML(labelByCat[m.category] || m.category) + "</div><div class=\"body\">" + escapeHTML(m.question) + "</div>" + (m.nudge ? '<div class="nudge"><b>💡 </b>' + escapeHTML(m.nudge) + "</div>" : "");
+    floatTip.classList.add("show"); positionTip(chip);
+  }
+  function positionTip(chip) {
+    var r = chip.getBoundingClientRect(), tipW = floatTip.offsetWidth, tipH = floatTip.offsetHeight, m = 10, vw = innerWidth, vh = innerHeight;
+    var placement = "below", top = r.bottom + m; if (top + tipH > vh - 8 && r.top - tipH - m > 8) { placement = "above"; top = r.top - tipH - m; }
+    var left = Math.max(8, Math.min(r.left + r.width / 2 - tipW / 2, vw - tipW - 8));
+    floatTip.style.left = left + "px"; floatTip.style.top = top + "px"; floatTip.dataset.placement = placement;
+    tipArrow.style.left = Math.max(14, Math.min(r.left + r.width / 2 - left, tipW - 14)) + "px";
+  }
+  function hideTip(force) { if (tipPinned && !force) return; floatTip.classList.remove("show"); activeChip = null; }
+  function clearOpened() { editor.querySelectorAll(".mark.opened").forEach(function (o) { o.classList.remove("opened"); }); editor.querySelectorAll(".note-chip.opened").forEach(function (o) { o.classList.remove("opened"); }); }
+
+  function renderFeedback() {
+    var ranges = [];
+    markers.forEach(function (mk, idx) { var s = submittedText.indexOf(mk.quote); if (s >= 0) ranges.push({ start: s, end: s + mk.quote.length, idx: idx }); });
+    ranges.sort(function (a, b) { return a.start - b.start; });
+    var html = "", cursor = 0, n = 0;
+    ranges.forEach(function (r) {
+      if (r.start > cursor) html += escapeHTML(submittedText.slice(cursor, r.start)); n++;
+      var color = colorByCat[markers[r.idx].category] || "var(--ink-mute)";
+      html += '<span class="mark" data-idx="' + r.idx + '" style="--mark-c:' + color + '">' + escapeHTML(submittedText.slice(r.start, r.end)) + "</span>";
+      html += '<button type="button" class="note-chip" data-idx="' + r.idx + '" style="--mark-c:' + color + '" aria-label="Hinweis ' + n + ' öffnen"><span class="num">' + n + "</span></button>";
+      cursor = r.end;
+    });
+    if (cursor < submittedText.length) html += escapeHTML(submittedText.slice(cursor));
+    editor.removeAttribute("contenteditable"); editor.innerHTML = html;
+    if (hintBanner) {
+      if (n > 0) {
+        hintBanner.className = "hint-banner show";
+        hintBanner.innerHTML = '<div class="row"><span class="icon">💡</span><span>Die KI hat <b>' + n + ' Stellen</b> markiert, an denen du präziser werden könntest. Öffne einen Marker nur, wenn du Feedback dazu möchtest — die Hinweise sind <b>Fragen, keine Lösungen</b>. Du schreibst.</span><button class="toggle" type="button" id="toggleMarkers">Marker ausblenden</button></div>';
+        document.getElementById("toggleMarkers").addEventListener("click", function () { markersHidden = editorShell.classList.toggle("markers-hidden"); this.textContent = markersHidden ? "Marker einblenden" : "Marker ausblenden"; if (markersHidden) { tipPinned = false; clearOpened(); hideTip(true); } });
+      } else {
+        hintBanner.className = "hint-banner show";
+        hintBanner.innerHTML = '<div class="row"><span class="icon">✅</span><span>Die KI hat hier <b>keine Stellen</b> markiert — deine Beschreibung ist schon recht präzise.</span></div>';
+      }
+    }
+    editor.querySelectorAll(".note-chip").forEach(function (chip) {
+      var idx = chip.dataset.idx, mark = editor.querySelector('.mark[data-idx="' + idx + '"]');
+      chip.addEventListener("mouseenter", function () { if (mark) mark.classList.add("hovered"); if (!tipPinned) showTipFor(chip); });
+      chip.addEventListener("mouseleave", function () { if (mark) mark.classList.remove("hovered"); if (!tipPinned) hideTip(); });
+      chip.addEventListener("focus", function () { if (mark) mark.classList.add("hovered"); showTipFor(chip); });
+      chip.addEventListener("blur", function () { if (mark) mark.classList.remove("hovered"); if (!tipPinned) hideTip(); });
+      chip.addEventListener("click", function (e) { e.stopPropagation(); if (tipPinned && activeChip === chip) { tipPinned = false; clearOpened(); hideTip(true); } else { clearOpened(); chip.classList.add("opened"); if (mark) mark.classList.add("opened"); tipPinned = true; showTipFor(chip); } });
+    });
+  }
+  function showError(msg) {
+    if (!hintBanner) return; hintBanner.className = "hint-banner show";
+    hintBanner.style.background = "color-mix(in srgb, var(--bad) 8%, transparent)"; hintBanner.style.borderColor = "color-mix(in srgb, var(--bad) 30%, transparent)";
+    hintBanner.innerHTML = '<div class="row"><span class="icon">⚠️</span><span><b>' + escapeHTML(msg) + '</b> Du kannst es erneut versuchen oder ersatzweise das Demo-Feedback ansehen.</span><button class="toggle" type="button" id="demoFb">Demo-Feedback</button></div>';
+    document.getElementById("demoFb").addEventListener("click", function () { hintBanner.style.background = ""; hintBanner.style.borderColor = ""; submittedText = demoText; markers = (demo.feedback && demo.feedback.markers) || []; phase = "feedback"; renderFeedback(); });
+  }
+  document.addEventListener("click", function (e) { if (floatTip.contains(e.target)) return; if (e.target.closest && e.target.closest(".note-chip")) return; tipPinned = false; clearOpened(); hideTip(true); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { tipPinned = false; clearOpened(); hideTip(true); } });
+  addEventListener("resize", function () { if (activeChip) positionTip(activeChip); });
+  addEventListener("scroll", function () { if (activeChip) positionTip(activeChip); }, true);
+
+  on("revealExpert", "click", function () { var c = document.getElementById("expertCard"); if (c) c.classList.add("revealed"); });
+
+  setTimeout(startTyping, 700);
+})();

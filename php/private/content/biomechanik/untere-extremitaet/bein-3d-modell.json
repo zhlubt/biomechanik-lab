@@ -1,0 +1,202 @@
+{
+  "id": "bein-3d-modell",
+  "course": {
+    "id": "biomechanik",
+    "title": "Biomechanik"
+  },
+  "lesson": {
+    "id": "untere-extremitaet",
+    "title": "Untere Extremität · 3D-Modell"
+  },
+  "number": "01",
+  "title": "Die Bestandteile des Beins erkennen und grob beschreiben.",
+  "thumbnail": "img/thumb_3dbein.png",
+  "intro": "Hier siehst du ein interaktives 3D-Modell der rechten unteren Extremität — vom Becken bis zu den Zehen. Dreh es mit der Maus, zoom hinein und blende einzelne Schichten (Muskeln, Bänder, Gefäße, Nerven) aus, um die Knochen darunter zu sehen. Deine Aufgabe ist erstmal ein grober Überblick: Welche großen Bestandteile hat das Bein?",
+  "status": "Übung aktiv · 3D-Modell · drehbar & schichtweise ausblendbar",
+  "media": [
+    {
+      "type": "model3d",
+      "label": "01 · 3D-Modell der unteren Extremität",
+      "src": "model/lower-limb.glb",
+      "config": {
+        "layers": [
+          "knochen",
+          "muskel",
+          "band",
+          "knorpel",
+          "gefaess",
+          "nerv"
+        ],
+        "initialHidden": []
+      }
+    }
+  ],
+  "timestampMode": false,
+  "legend": [
+    {
+      "key": "knochen",
+      "label": "Knochen (Skelett)",
+      "color": "#e8e3d6",
+      "colorName": "hell",
+      "hint": "Das passive Stützsystem: Becken, Oberschenkel- (Femur) und Unterschenkelknochen (Tibia/Fibula), Kniescheibe (Patella) und das Fußskelett."
+    },
+    {
+      "key": "muskel",
+      "label": "Muskeln",
+      "color": "#c0504d",
+      "colorName": "rot",
+      "hint": "Das aktive Bewegungssystem: erzeugt über Anspannung Kräfte und bewegt die Gelenke (z. B. Quadrizeps vorne, ischiocrurale Muskeln hinten, Wadenmuskulatur)."
+    },
+    {
+      "key": "band",
+      "label": "Bänder & Sehnen",
+      "color": "#e6c34a",
+      "colorName": "gelb",
+      "hint": "Bindegewebe: Sehnen übertragen Muskelkraft auf den Knochen, Bänder sichern und führen die Gelenke (z. B. Kreuz- und Seitenbänder am Knie)."
+    },
+    {
+      "key": "knorpel",
+      "label": "Knorpel",
+      "color": "#8fd3c7",
+      "colorName": "türkis",
+      "hint": "Glatte, druckverteilende Gleitflächen in den Gelenken (z. B. Gelenkknorpel, Menisken)."
+    },
+    {
+      "key": "gefaess",
+      "label": "Gefäße",
+      "color": "#b3503a",
+      "colorName": "dunkelrot",
+      "hint": "Arterien und Venen — die Versorgung. Für den groben Überblick darfst du sie ausblenden."
+    },
+    {
+      "key": "nerv",
+      "label": "Nerven",
+      "color": "#d9c463",
+      "colorName": "ocker",
+      "hint": "Steuerleitungen, die Muskeln ansteuern und Informationen melden. Für den Überblick ebenfalls ausblendbar."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Untere Extremität",
+      "definition": "Das Bein im weiteren Sinn: Beckengürtel (Hüftbein), Oberschenkel, Unterschenkel und Fuß."
+    },
+    {
+      "term": "Femur",
+      "definition": "Oberschenkelknochen — der längste und kräftigste Knochen des Körpers."
+    },
+    {
+      "term": "Tibia & Fibula",
+      "definition": "Schienbein (Tibia, innen, tragend) und Wadenbein (Fibula, außen) bilden den Unterschenkel."
+    },
+    {
+      "term": "Patella",
+      "definition": "Die Kniescheibe — ein in die Quadrizepssehne eingelagerter Knochen, der die Hebelwirkung am Knie verbessert."
+    },
+    {
+      "term": "Gelenk",
+      "definition": "Bewegliche Verbindung zweier Knochen. Wichtige Beingelenke: Hüft-, Knie- und Sprunggelenk."
+    },
+    {
+      "term": "Sehne vs. Band",
+      "definition": "Eine Sehne verbindet Muskel mit Knochen (überträgt Kraft); ein Band verbindet Knochen mit Knochen (sichert das Gelenk)."
+    }
+  ],
+  "guidance": {
+    "title": "So verschaffst du dir einen Überblick",
+    "steps": [
+      "Dreh das Modell langsam einmal rundherum und schau es von vorne, hinten und der Seite an.",
+      "Blende zuerst Muskeln aus, dann Bänder — so siehst du das Skelett darunter.",
+      "Gliedere von oben nach unten: Becken → Oberschenkel → Knie → Unterschenkel → Sprunggelenk → Fuß.",
+      "Benenne pro Abschnitt die großen Bausteine (Knochen, Muskelgruppe, Gelenk)."
+    ]
+  },
+  "task": "Verschaffe dir einen groben Überblick über das Bein. Beschreibe in eigenen Worten, aus welchen großen Bestandteilen die untere Extremität besteht — gliedere von oben (Becken) nach unten (Fuß) und nenne pro Abschnitt die wichtigsten Knochen, Muskelgruppen und Gelenke. Es geht noch nicht um Details. Wenn du fertig bist, klick „KI Feedback“.",
+  "scaffold": [
+    {
+      "step": "Sehen",
+      "text": "Dreh das Modell und blende Schichten aus, bis du Knochen, Muskeln und Gelenke unterscheiden kannst."
+    },
+    {
+      "step": "Gliedern",
+      "text": "Teile das Bein grob: Becken/Hüfte – Oberschenkel – Knie – Unterschenkel – Sprunggelenk – Fuß."
+    },
+    {
+      "step": "Benennen",
+      "text": "Nenne pro Abschnitt die großen Bausteine (z. B. Femur, Quadrizeps, Kniegelenk)."
+    },
+    {
+      "step": "Ordnen",
+      "text": "Unterscheide passiven Halteapparat (Knochen, Bänder) und aktiven Bewegungsapparat (Muskeln, Sehnen)."
+    }
+  ],
+  "feedbackCategories": [
+    {
+      "key": "struktur",
+      "label": "Strukturen / Bestandteile",
+      "color": "#3a63d8"
+    },
+    {
+      "key": "lage",
+      "label": "Lage & Gliederung",
+      "color": "#d98018"
+    },
+    {
+      "key": "fachsprache",
+      "label": "Fachsprache",
+      "color": "#1aa56a"
+    }
+  ],
+  "targetConcepts": [
+    "Becken",
+    "Hüftbein",
+    "Femur",
+    "Patella",
+    "Tibia",
+    "Fibula",
+    "Fußskelett",
+    "Hüftgelenk",
+    "Kniegelenk",
+    "Sprunggelenk",
+    "Quadrizeps",
+    "ischiocrurale Muskulatur",
+    "Wadenmuskulatur",
+    "Sehne",
+    "Band",
+    "Knorpel"
+  ],
+  "mediaDescription": "Interaktives 3D-Modell einer rechten unteren Extremität (von Lendenwirbelsäule/Becken bis zu den Zehen). Es enthält als ein- und ausblendbare Schichten: Knochen (Becken/Hüftbein, Femur, Patella, Tibia, Fibula, Fußskelett), Muskeln, Bänder/Sehnen, Knorpel, Gefäße (Arterien/Venen) und Nerven. Die/der Studierende kann das Modell frei drehen, zoomen und einzelne Strukturschichten entfernen, um z. B. unter den Muskeln das Skelett zu sehen.",
+  "feedbackPrompt": "Du bist ein sokratischer Anatomie-Coach für Sportstudierende. Die/der Studierende gibt einen GROBEN Überblick über die Bestandteile der unteren Extremität (Bein), erarbeitet an einem 3D-Modell. Es geht bewusst nur um einen ersten, groben Überblick — bewerte nicht zu kleinteilig. Markiere 2–4 Stellen, an denen die Strukturbenennung, die anatomische Lage/Gliederung oder die Fachsprache präziser werden könnte. Gib FRAGEN oder kurze Hinweise, niemals fertige Lösungen oder Listen zum Abschreiben. Achte besonders auf: Werden die großen Knochen (Becken/Hüftbein, Femur, Tibia, Fibula, Patella, Fußskelett) richtig benannt und zugeordnet? Ist die Gliederung von oben nach unten plausibel? Wird zwischen passivem Halteapparat (Knochen, Bänder) und aktivem Bewegungsapparat (Muskeln, Sehnen) unterschieden? Werden Sehne (Muskel↔Knochen) und Band (Knochen↔Knochen) nicht verwechselt? Wenn umgangssprachliche Begriffe genutzt werden (z. B. „Schienbein“), frage behutsam nach dem Fachbegriff, ohne ihn gleich zu liefern. Ordne jede Marke einer Kategorie zu (struktur, lage, fachsprache). Antworte ausschließlich als JSON {\"markers\":[{\"category\":\"…\",\"quote\":\"wörtliches Zitat aus dem Text\",\"question\":\"…\",\"nudge\":\"optionaler kurzer Hinweis\"}]}.",
+  "modelSolution": "Grober Überblick (von oben nach unten): (1) Beckengürtel — das Hüftbein verbindet das Bein über das Hüftgelenk mit dem Rumpf. (2) Oberschenkel — der Femur (Oberschenkelknochen) ist der lange, kräftige Knochen; vorne liegt der Streckmuskel Quadrizeps, hinten die ischiocrurale (beugende) Muskulatur. (3) Kniegelenk — Verbindung von Femur und Tibia, davor die Patella (Kniescheibe) in der Quadrizepssehne; gesichert durch Kreuz- und Seitenbänder, gepuffert durch Knorpel/Menisken. (4) Unterschenkel — Tibia (Schienbein, tragend, innen) und Fibula (Wadenbein, außen); hinten die Wadenmuskulatur, deren Achillessehne zur Ferse zieht. (5) Sprunggelenk — Verbindung Unterschenkel/Fuß. (6) Fuß — Fußwurzel (u. a. Fersenbein/Calcaneus, Sprungbein/Talus), Mittelfuß und Zehen. Quer dazu lassen sich die Strukturen ordnen in passiven Halteapparat (Knochen, Bänder, Knorpel) und aktiven Bewegungsapparat (Muskeln, Sehnen); Gefäße und Nerven versorgen und steuern das Ganze. Für diesen ersten Überblick reicht es, die großen Abschnitte und ihre Hauptbausteine zu erkennen — die Details kommen später.",
+  "demo": {
+    "studentText": "Das Bein besteht oben aus dem Becken, daran hängt der große Oberschenkelknochen (Femur). Vorne am Oberschenkel sind dicke Muskeln, die das Bein strecken. In der Mitte ist das Knie mit der Kniescheibe. Darunter kommen zwei Knochen im Unterschenkel, das Schienbein und das Wadenbein. Hinten ist die Wade. Ganz unten ist der Fuß mit vielen kleinen Knochen. Die Bänder halten alles zusammen.",
+    "feedback": {
+      "markers": [
+        {
+          "category": "fachsprache",
+          "quote": "das Schienbein und das Wadenbein",
+          "question": "Wie heißen Schien- und Wadenbein in der Fachsprache — und welcher der beiden trägt das meiste Gewicht?",
+          "nudge": "Tibia und Fibula."
+        },
+        {
+          "category": "struktur",
+          "quote": "Vorne am Oberschenkel sind dicke Muskeln, die das Bein strecken",
+          "question": "Wie heißt diese vordere Streckmuskel-Gruppe, und über welche Struktur zieht sie an der Kniescheibe vorbei zum Unterschenkel?",
+          "nudge": "Quadrizeps; Quadrizepssehne."
+        },
+        {
+          "category": "lage",
+          "quote": "Die Bänder halten alles zusammen",
+          "question": "Verbindet ein Band Knochen mit Knochen oder Muskel mit Knochen? Und wodurch unterscheidet es sich von einer Sehne?",
+          "nudge": "Band = Knochen↔Knochen, Sehne = Muskel↔Knochen."
+        },
+        {
+          "category": "struktur",
+          "quote": "Ganz unten ist der Fuß mit vielen kleinen Knochen",
+          "question": "Kannst du den Fuß grob in drei Abschnitte gliedern? Welche zwei großen Fußwurzelknochen kennst du (Ferse, Sprung)?",
+          "nudge": "Fußwurzel–Mittelfuß–Zehen; Calcaneus & Talus."
+        }
+      ]
+    }
+  }
+}

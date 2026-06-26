@@ -1,0 +1,171 @@
+{
+  "id": "kugelstoss-phasen",
+  "course": {
+    "id": "leichtathletik",
+    "title": "Leichtathletik"
+  },
+  "lesson": {
+    "id": "wurfdisziplinen",
+    "title": "Wurf- & Stoßdisziplinen · Bewegungsphasen"
+  },
+  "number": "01",
+  "title": "Die Phasen des Kugelstoßes erkennen und benennen.",
+  "thumbnail": "img/thumb_wurf.png",
+  "intro": "Im Video stößt ein Sportler die Kugel in der Angleittechnik (seitlich gefilmt). Deine Aufgabe: Erkenne die einzelnen Phasen der Bewegung, benenne für jede Phase den Zeitpunkt im Video (Zeitstempel) und beschreibe, was biomechanisch passiert. Nutze die Frame-Steuerung (←/→) und 0.25×, um die Übergänge genau zu finden.",
+  "status": "Übung aktiv · Video 00:04.146 · 120 fps",
+  "media": [
+    {
+      "type": "video",
+      "label": "01 · Kugelstoß — Angleittechnik",
+      "src": "vid/kugelstossen.mp4",
+      "config": {
+        "durationSec": 4.15,
+        "fps": 120,
+        "phases": []
+      }
+    }
+  ],
+  "timestampMode": true,
+  "legend": [
+    {
+      "key": "auftakt",
+      "label": "Ausgangsstellung & Auftakt",
+      "color": "#3a63d8",
+      "colorName": "blau",
+      "hint": "Tiefe Position mit Rücken zur Stoßrichtung; Sammeln und Vorspannen vor dem Angleiten."
+    },
+    {
+      "key": "angleiten",
+      "label": "Angleiten (Glide)",
+      "color": "#d98018",
+      "colorName": "orange",
+      "hint": "Explosiver, flacher Antritt rückwärts — das Becken führt, der Oberkörper bleibt zunächst zurück."
+    },
+    {
+      "key": "abdruck",
+      "label": "Stemmschritt & Abdruck",
+      "color": "#1aa56a",
+      "colorName": "grün",
+      "hint": "Aufsetzen des Stemmbeins als Widerlager, dann explosive Streckung Bein–Hüfte–Rumpf (Triple Extension)."
+    },
+    {
+      "key": "abwurf",
+      "label": "Abwurf & Nachstellen",
+      "color": "#c93535",
+      "colorName": "rot",
+      "hint": "Beschleunigte Streckung des Stoßarms, Abgabe der Kugel (~37–42°), danach Abfangen im Kreis."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Angleittechnik",
+      "definition": "Stoßtechnik, bei der sich der Athlet flach rückwärts durch den Ring „angleitet“ und dann ausstößt (O’Brien-Technik)."
+    },
+    {
+      "term": "Stemmschritt / Aufsatz",
+      "definition": "Aufsetzen des vorderen Beins als Widerlager — leitet den Kraftübertrag in den Abdruck ein."
+    },
+    {
+      "term": "Triple Extension",
+      "definition": "Koordinierte Streckung von Sprunggelenk, Knie und Hüfte zur maximalen Beschleunigung."
+    },
+    {
+      "term": "Abwurfwinkel",
+      "definition": "Winkel der Kugelbahn zur Horizontalen beim Abwurf; je nach Abwurfhöhe/-geschwindigkeit physikalisch optimal ~37–42°."
+    },
+    {
+      "term": "Beschleunigungsweg",
+      "definition": "Strecke, über die die Kugel beschleunigt wird — länger = mehr Abfluggeschwindigkeit."
+    }
+  ],
+  "guidance": {
+    "title": "So benennst du Phasen + Zeitpunkte sauber",
+    "steps": [
+      "Finde mit ←/→ (Frame) den genauen Übergang zwischen zwei Phasen.",
+      "Setze mit „⏱ Zeitstempel einfügen“ den Zeitpunkt in deinen Text.",
+      "Benenne die Phase mit dem Fachbegriff.",
+      "Beschreibe, was biomechanisch passiert (Kräfte, Gelenke, Ziel der Phase)."
+    ]
+  },
+  "task": "Erkenne die Phasen des Kugelstoßes. Beschreibe für JEDE Phase: (1) wann sie beginnt — füge den Zeitstempel aus dem Video ein, (2) ihren Fachbegriff, (3) was biomechanisch passiert. Wenn du fertig bist, klick „KI Feedback“.",
+  "scaffold": [
+    {
+      "step": "Sehen",
+      "text": "Spiel das Video langsam ab (0.25×) und beobachte den Ablauf vom Auftakt bis zum Abfangen."
+    },
+    {
+      "step": "Phasen abgrenzen",
+      "text": "Wo endet das Angleiten, wo beginnt der Abdruck? Nutze die Frame-Schritte."
+    },
+    {
+      "step": "Zeitstempel setzen",
+      "text": "Für jeden Phasenbeginn: ⏱ Zeitstempel einfügen + Fachbegriff."
+    },
+    {
+      "step": "Analysieren",
+      "text": "Warum ist der Stemmschritt entscheidend? Was bewirkt die Triple Extension für die Abfluggeschwindigkeit?"
+    }
+  ],
+  "feedbackCategories": [
+    {
+      "key": "phasen",
+      "label": "Phasen-Zuordnung",
+      "color": "#3a63d8"
+    },
+    {
+      "key": "zeit",
+      "label": "Zeitpunkte",
+      "color": "#d98018"
+    },
+    {
+      "key": "technik",
+      "label": "Technik / Biomechanik",
+      "color": "#1aa56a"
+    }
+  ],
+  "targetConcepts": [
+    "Auftakt",
+    "Angleiten",
+    "Stemmschritt",
+    "Abdruck",
+    "Triple Extension",
+    "Abwurf",
+    "Abwurfwinkel",
+    "Nachstellen",
+    "Beschleunigungsweg"
+  ],
+  "mediaDescription": "Seitlich gefilmtes Video (ca. 4,1 s, 120 fps) eines Kugelstoßes in Angleittechnik auf einer Tartanbahn. Ablauf: zu Beginn tiefe Ausgangsstellung/Auftakt mit Rücken zur Stoßrichtung; danach flaches explosives Angleiten rückwärts (Becken führt); Aufsetzen des Stemmbeins; explosive Streckung (Abdruck, Triple Extension); Abwurf der Kugel schräg nach oben; Abfangen/Nachstellen. Ein Pylon und eine senkrechte Stange dienen als Referenzobjekte (Kalibrierung).",
+  "feedbackPrompt": "Du bist ein sokratischer Bewegungsanalyse-Coach. Die/der Studierende beschreibt die Phasen eines Kugelstoßes (Angleittechnik) anhand eines Videos und benennt für jede Phase einen Zeitstempel im Format [m:ss.xx]. Markiere 2–4 Stellen, an denen die Phasen-Zuordnung, der genannte Zeitpunkt oder die biomechanische Beschreibung präziser/korrekter werden könnte. Gib FRAGEN oder Hinweise, niemals die Lösung. Achte besonders auf: Sind die Phasen korrekt benannt und in plausibler Reihenfolge (Auftakt → Angleiten → Stemmschritt → Abdruck → Abwurf → Nachstellen)? Passen die Zeitstempel zur beschriebenen Phase? Ist die Biomechanik korrekt (Stemmschritt als Widerlager, Triple Extension, Abwurfwinkel)? Ordne jede Marke einer Kategorie zu (phasen, zeit, technik). Antworte ausschließlich als JSON {\"markers\":[{\"category\":\"…\",\"quote\":\"wörtliches Zitat aus dem Text\",\"question\":\"…\",\"nudge\":\"optionaler kurzer Hinweis\"}]}.",
+  "modelSolution": "Der Stoß gliedert sich in: (1) Ausgangsstellung/Auftakt — der Athlet steht tief, Rücken zur Stoßrichtung, sammelt sich und spannt vor. (2) Angleiten — explosiver, flacher Antritt rückwärts; das Becken führt, der Oberkörper bleibt zunächst zurück, um den Beschleunigungsweg lang zu halten. (3) Stemmschritt/Aufsatz — das vordere Bein setzt als Widerlager auf und blockt, sodass die Energie nach oben-vorn umgelenkt wird. (4) Abdruck/Streckung — koordinierte Triple Extension von Sprunggelenk, Knie und Hüfte, der Rumpf richtet sich auf. (5) Abwurf — der Stoßarm streckt explosiv und gibt die Kugel unter ~37–42° ab; entscheidend sind Abfluggeschwindigkeit und Abwurfwinkel. (6) Nachstellen/Abfangen — Beinwechsel, um das Gleichgewicht im Kreis zu halten. Die genauen Zeitpunkte ergeben sich aus dem Video; wichtig sind die richtige Reihenfolge und das Erkennen des Stemmschritts als Schlüsselmoment für den Kraftübertrag.",
+  "demo": {
+    "studentText": "Bei [0:00.30] steht er noch geduckt da, das ist der Anfang. Dann macht er bei [0:01.80] einen schnellen Schritt nach hinten. Bei [0:03.00] streckt er sich und wirft die Kugel weg. Am Ende [0:03.80] fängt er sich ab.",
+    "feedback": {
+      "markers": [
+        {
+          "category": "phasen",
+          "quote": "das ist der Anfang",
+          "question": "Wie heißt diese Anfangsphase im Kugelstoß fachlich — und was ist ihr Zweck (Körperhaltung, Vorspannung)?",
+          "nudge": "Stichwort Ausgangsstellung / Auftakt."
+        },
+        {
+          "category": "technik",
+          "quote": "einen schnellen Schritt nach hinten",
+          "question": "Ist „Schritt“ hier treffend? Wie nennt man diese flache, gleitende Bewegung in der Angleittechnik — und welcher Körperteil führt dabei zuerst?",
+          "nudge": "Angleiten (Glide); das Becken führt."
+        },
+        {
+          "category": "technik",
+          "quote": "streckt er sich und wirft die Kugel weg",
+          "question": "Welche Gelenke strecken hier gemeinsam, und wie heißt dieses Prinzip? Was passiert direkt VOR dem Abwurf mit dem vorderen Bein?",
+          "nudge": "Triple Extension; Stemmschritt als Widerlager."
+        },
+        {
+          "category": "zeit",
+          "quote": "[0:03.00]",
+          "question": "Prüfe mit den Frame-Schritten: Beginnt bei diesem Zeitpunkt schon der Abwurf, oder noch der Abdruck? Wo genau verlässt die Kugel die Hand?",
+          "nudge": "Abdruck und Abwurf sind zwei getrennte Momente."
+        }
+      ]
+    }
+  }
+}
