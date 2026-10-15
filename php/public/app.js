@@ -2,6 +2,7 @@
    Biomechanik-Lab · Client (PHP-Variante)
    Unterstützt zwei Medien-Arten über eine Transport-Abstraktion:
    - "jumpforce": schematische Sprung-Animation + Kraftkurven (SVG)
+   - "image": statisches Diagramm/Messschrieb, kein Transport
    - "video":     echtes Video mit Frame-Steuerung
    Gemeinsam: Editor + sokratisches KI-Feedback + (für Video) Zeitstempel.
    Datengetrieben über window.EXERCISE (ohne feedbackPrompt).
@@ -229,7 +230,7 @@
   }
 
   var transport = (MEDIA.kind === "video") ? makeVideoTransport()
-    : (MEDIA.kind === "model3d") ? makeNullTransport()
+    : (MEDIA.kind === "model3d" || MEDIA.kind === "image") ? makeNullTransport()
     : makeJumpTransport();
   updateUI(transport);
 
@@ -300,26 +301,87 @@
 
   function typeOut() {
     if (phase !== "writing" || typingDone) return;
-    if (typed >= demoText.length) { editor.innerHTML = escapeHTML(demoText); setWordCount(countWords(demoText)); typingDone = true; editor.setAttribute("contenteditable", "true"); if (aiBtn) aiBtn.disabled = false; if (liveLabel) liveLabel.textContent = "live · du schreibst"; return; }
+    if (typed >= demoText.length) { editor.innerHTML = escapeHTML(demoText); setWordCount(countWords(demoText)); typingDone = true; editor.setAttribute("contenteditable", "true"); if (liveLabel) liveLabel.textContent = "live · du schreibst"; syncAiBtn(); return; }
     var step = 2, partial = demoText.slice(0, typed + step);
     editor.innerHTML = escapeHTML(partial) + '<span class="caret"></span>'; setWordCount(countWords(partial));
     var last = demoText[Math.min(typed + step - 1, demoText.length - 1)], delay = 10 + Math.random() * 16;
     if (".,".indexOf(last) >= 0) delay = 90 + Math.random() * 70; if (last === "\n") delay = 140; if (demoText.slice(typed, typed + 5) === "aber ") delay = 260;
     typed += step; typeTimer = setTimeout(typeOut, delay);
   }
+  /* Der Editor gehoert IMMER der/dem Studierenden: er ist von Anfang an beschreibbar,
+     und jede Eingabe bricht die laufende Demo-Animation ab, statt sie zu ueberschreiben. */
+  var MIN_CHARS = 10; // muss zum Serverlimit in feedback.php passen
+
+  function currentText() { return (editor ? editor.innerText : "").trim(); }
+  function syncAiBtn() {
+    if (!aiBtn || cooldownTimer) return;
+    aiBtn.disabled = (phase !== "writing") || currentText().length < MIN_CHARS;
+  }
+
+  /** Animation anhalten und das bisher Getippte als normal editierbaren Text uebernehmen. */
+  function stopTyping(keepPartial) {
+    clearTimeout(typeTimer); typeTimer = null;
+    if (!typingDone) {
+      var txt = keepPartial ? demoText.slice(0, Math.min(typed, demoText.length)) : demoText;
+      editor.innerHTML = escapeHTML(txt);
+      typed = txt.length; typingDone = true;
+      setWordCount(countWords(txt));
+    }
+    editor.setAttribute("contenteditable", "true");
+    if (liveLabel) liveLabel.textContent = "live · du schreibst";
+    syncAiBtn();
+  }
   function startTyping() {
     clearTimeout(typeTimer); phase = "writing"; typed = 0; typingDone = false; markers = []; submittedText = "";
-    editor.removeAttribute("contenteditable"); editor.innerHTML = "";
+    // Beschreibbar bleibt es trotzdem - wer hineinklickt, uebernimmt sofort.
+    editor.setAttribute("contenteditable", "true"); editor.innerHTML = "";
     if (aiBtn) aiBtn.disabled = true; if (hintBanner) hintBanner.className = "hint-banner";
-    if (liveLabel) liveLabel.textContent = "live · Studierende:r tippt"; hideTip(true); typeOut();
+    if (liveLabel) liveLabel.textContent = "live · Beispieltext wird getippt"; hideTip(true); typeOut();
   }
-  function skipTyping() {
-    clearTimeout(typeTimer); editor.innerHTML = escapeHTML(demoText); setWordCount(countWords(demoText));
-    typed = demoText.length; typingDone = true; editor.setAttribute("contenteditable", "true");
-    if (aiBtn) aiBtn.disabled = false; if (liveLabel) liveLabel.textContent = "live · du schreibst";
+  function skipTyping() { stopTyping(false); }
+  /** Aus der Marker-Ansicht zurueck ins Schreiben - der abgegebene Text bleibt erhalten. */
+  function resumeEditing() {
+    if (phase === "writing") return;
+    var keep = submittedText || (editor ? editor.innerText : "");
+    phase = "writing"; typingDone = true; markers = [];
+    if (editorShell) editorShell.classList.remove("markers-hidden");
+    hideTip(true);
+    editor.setAttribute("contenteditable", "true");
+    editor.innerHTML = escapeHTML(keep);
+    setWordCount(countWords(keep));
+    if (liveLabel) liveLabel.textContent = "live · du schreibst";
+    syncAiBtn();
   }
-  on("skipType", "click", skipTyping); on("replayType", "click", startTyping); on("resetBtn", "click", startTyping);
-  if (editor) editor.addEventListener("input", function () { if (phase === "writing") setWordCount(countWords(editor.innerText)); });
+
+  /** Textfeld leeren, damit man ohne Umweg eigene Saetze schreiben kann. */
+  function clearEditor() {
+    clearTimeout(typeTimer); typeTimer = null;
+    phase = "writing"; typingDone = true; typed = 0; markers = []; submittedText = "";
+    if (editorShell) editorShell.classList.remove("markers-hidden");
+    editor.setAttribute("contenteditable", "true"); editor.innerHTML = "";
+    setWordCount(0);
+    if (hintBanner) hintBanner.className = "hint-banner";
+    if (liveLabel) liveLabel.textContent = "live · du schreibst";
+    hideTip(true); syncAiBtn(); editor.focus();
+  }
+  on("skipType", "click", skipTyping);
+  on("replayType", "click", startTyping);
+  on("resetBtn", "click", startTyping);
+  on("clearBtn", "click", clearEditor);
+
+  if (editor) {
+    editor.setAttribute("contenteditable", "true");
+    // Erste eigene Regung gewinnt gegen die Animation.
+    ["pointerdown", "keydown", "paste", "drop"].forEach(function (evt) {
+      editor.addEventListener(evt, function () { if (!typingDone) stopTyping(true); }, true);
+    });
+    editor.addEventListener("input", function () {
+      if (phase === "writing") { setWordCount(countWords(editor.innerText)); syncAiBtn(); }
+      // Nicht angemeldet und es wird getippt: den Hinweis oben einmal hervorheben,
+      // solange der Text noch kurz genug ist, um ihn ohne Aerger neu zu schreiben.
+      if (EX.loggedIn === false) nudgeLoginFirst();
+    });
+  }
 
   /* ---- Zeitstempel einfügen (nur Video) ---- */
   function insertAtCursor(text) {
@@ -348,12 +410,23 @@
   var cooldownTimer = null;
   function loginHref() { return "konto.php?next=" + encodeURIComponent(location.pathname.split("/").pop() + location.search); }
 
+  /* Den serverseitig gerenderten Anmelde-Hinweis einmalig hervorheben. */
+  var loginFirstNudged = false;
+  function nudgeLoginFirst() {
+    if (loginFirstNudged) return;
+    var el = document.getElementById("loginFirst");
+    if (!el) return;
+    loginFirstNudged = true;
+    el.classList.add("urgent");
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
   function startCooldown(secs) {
     secs = Math.max(1, parseInt(secs, 10) || 60);
     if (cooldownTimer) clearInterval(cooldownTimer);
     if (aiBtn) aiBtn.disabled = true;
     function tick() {
-      if (secs <= 0) { clearInterval(cooldownTimer); cooldownTimer = null; if (aiBtn) aiBtn.disabled = false; if (aiBtnLabel) aiBtnLabel.textContent = "KI Feedback"; return; }
+      if (secs <= 0) { clearInterval(cooldownTimer); cooldownTimer = null; if (aiBtnLabel) aiBtnLabel.textContent = "KI Feedback"; syncAiBtn(); return; }
       var m = Math.floor(secs / 60), s = secs % 60;
       if (aiBtnLabel) aiBtnLabel.textContent = "Abkühlen … " + (m > 0 ? m + ":" + String(s).padStart(2, "0") : s + " s");
       secs--;
@@ -368,7 +441,7 @@
     if (text.length < 10) { showError("Bitte schreibe zuerst ein paar Sätze."); return; }
     if (text.length > 6000) { showError("Dein Text ist zu lang (max. 6000 Zeichen)."); return; }
     if (aiBtn) aiBtn.disabled = true; if (aiBtnLabel) aiBtnLabel.textContent = "KI denkt nach …"; if (liveLabel) liveLabel.textContent = "KI denkt nach …";
-    fetch("feedback.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({}, EX.locator, { studentText: text })) })
+    fetch("feedback.php", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": EX.csrf || "" }, body: JSON.stringify(Object.assign({}, EX.locator, { studentText: text })) })
       .then(function (res) { return res.json().then(function (j) { return { ok: res.ok, status: res.status, j: j }; }); })
       .then(function (r) {
         if (r.status === 401) { showLoginNeeded(); return; }
@@ -390,7 +463,7 @@
     hintBanner.innerHTML = '<div class="row"><span class="icon">ℹ️</span><span>' + html + "</span></div>";
   }
   function showLoginNeeded() {
-    showBanner('Um KI-Feedback zu bekommen, starte bitte kurz (nur dein Name): <a href="' + loginHref() + '">▶ Loslegen</a>. Das schützt die Plattform vor Missbrauch und speichert deine Abgaben.');
+    showBanner('Um KI-Feedback zu bekommen, starte bitte kurz (nur dein Name): <a href="' + loginHref() + '">Loslegen</a>. Das schützt die Plattform vor Missbrauch und speichert deine Abgaben.');
   }
 
   /* Speicher-Status nach dem Feedback anzeigen (Phase 4). */
@@ -474,7 +547,44 @@
   addEventListener("resize", function () { if (activeChip) positionTip(activeChip); });
   addEventListener("scroll", function () { if (activeChip) positionTip(activeChip); }, true);
 
-  on("revealExpert", "click", function () { var c = document.getElementById("expertCard"); if (c) c.classList.add("revealed"); });
+  /* Experten-Beschreibung: liegt nicht im Quelltext, wird einmalig nachgeladen. */
+  on("revealExpert", "click", function () {
+    var card = document.getElementById("expertCard"), bodyEl = document.getElementById("expertBody"), btn = this;
+    if (!card || !bodyEl) return;
+    if (card.classList.contains("revealed")) return;
+    if (bodyEl.textContent.trim()) { card.classList.add("revealed"); return; }
+
+    btn.disabled = true; var old = btn.textContent; btn.textContent = "wird geladen …";
+    fetch("loesung.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": EX.csrf || "" },
+      body: JSON.stringify(EX.locator)
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+      .then(function (r) {
+        if (r.status === 401) throw new Error("Bitte zuerst oben auf „Loslegen\u201c klicken.");
+        if (!r.ok) throw new Error((r.j && r.j.error) || "Konnte nicht geladen werden.");
+        bodyEl.textContent = (r.j && r.j.solution) || "Für diese Übung ist keine Musterlösung hinterlegt.";
+        card.classList.add("revealed");
+      })
+      .catch(function (e) { btn.disabled = false; btn.textContent = old; alert(e.message); });
+  });
+
+  /* ---------------------------------------------------------
+     Methoden-Fundus starten (public/media-methods.js).
+     Welche Methode ein Medium bekommt, steht allein in der Übungs-JSON
+     unter media[].methods — hier wird nur die Brücke zum Editor gereicht.
+  --------------------------------------------------------- */
+  if (window.LabMethods && MEDIA.methods) {
+    window.LabMethods.boot(document.getElementById("mediaHost"), MEDIA.methods, {
+      insertAtCursor: function (text) {
+        if (!typingDone) stopTyping(true);
+        resumeEditing();
+        insertAtCursor(text);
+        syncAiBtn();
+      }
+    });
+  }
 
   setTimeout(startTyping, 700);
 })();

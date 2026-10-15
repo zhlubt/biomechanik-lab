@@ -4,9 +4,10 @@
  * Nur mit gültiger Pflege-Anmeldung. Danach Weiterleitung in den Editor.
  */
 require __DIR__ . '/_boot.php';
-session_start();
+app_session_start();
 
 if (empty($_SESSION['pflege_auth'])) { http_response_code(403); exit('Nicht angemeldet.'); }
+csrf_require(false);
 
 function back_err(string $msg): void { $_SESSION['create_error'] = $msg; header('Location: pflege.php?neu=1'); exit; }
 

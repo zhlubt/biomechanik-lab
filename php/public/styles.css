@@ -1294,3 +1294,172 @@ a.sub-title:hover { color: var(--accent); }
 .designer { margin-top: 16px; border: 1px dashed var(--border-strong, #c3c9d4); border-radius: 12px; padding: 14px 16px; background: color-mix(in srgb, var(--accent) 5%, transparent); }
 .designer-head { font-size: 14px; color: var(--ink-dim); margin-bottom: 10px; }
 .designer-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* =========================================================
+   Methoden-Fundus · "readout": Achsenwert im Diagramm ablesen
+   Das Overlay liegt deckungsgleich auf dem Medium; die Geometrie
+   (Plotbereich, Höhe der Hilfslinie) kommt aus der Übungs-JSON.
+========================================================= */
+.ro-figure {
+  position: relative;
+  line-height: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ro-layer {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  touch-action: none; /* sonst scrollt die Seite beim Ziehen auf dem Tablet */
+  outline: none;
+}
+.ro-layer:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.ro-line {
+  position: absolute;
+  width: 0;
+  border-left: 1px solid #ffd34d;
+  pointer-events: none;
+}
+.ro-line-b {
+  border-left-style: dashed;
+}
+.ro-band {
+  position: absolute;
+  background: rgba(255, 211, 77, 0.16);
+  border-left: 1px solid rgba(255, 211, 77, 0.5);
+  border-right: 1px solid rgba(255, 211, 77, 0.5);
+  pointer-events: none;
+}
+.ro-badge {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  margin-top: -6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #ffd34d;
+  color: #241c00;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ro-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f4f6fa;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+.ro-bar .ro-val {
+  font-family: var(--mono);
+  background: #eef1f7;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: var(--ink);
+}
+.ro-bar .ro-insert {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.ro-bar .ro-hint {
+  margin-left: auto;
+  color: var(--ink-mute);
+  font-size: 12px;
+}
+@media (max-width: 720px) {
+  .ro-bar .ro-hint { margin-left: 0; flex-basis: 100%; }
+}
+
+/* Anmelde-Hinweis oberhalb des Schreibfelds (nur für nicht angemeldete Nutzer).
+   Steht bewusst VOR dem Editor: wer erst schreibt und dann zur Anmeldung wechselt,
+   verliert seinen Text. */
+.login-first {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border));
+  border-left: 4px solid var(--warn);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--warn) 7%, var(--panel));
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.login-first > span { flex: 1 1 320px; }
+.login-first .ctrl { white-space: nowrap; text-decoration: none; }
+.login-first.urgent {
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 14%, var(--panel));
+  animation: loginFirstPulse 0.5s ease-out 2;
+}
+@keyframes loginFirstPulse {
+  0%, 100% { transform: none; }
+  50% { transform: translateY(-2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-first.urgent { animation: none; }
+}
+
+/* Einstieg für Lehrende auf der Anmeldeseite. Steht sichtbar neben dem
+   Schnellstart, weil die Option vorher hinter zwei Klicks verborgen war. */
+.teacher-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.teacher-entry > span { flex: 1 1 320px; }
+.teacher-entry .ctrl { white-space: nowrap; text-decoration: none; }
+
+/* Einladungslink für Lehrpersonen (nur in der Pflege sichtbar). */
+.invite {
+  margin: 18px 0 22px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+.invite-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.invite-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.invite-row input {
+  flex: 1 1 420px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink-dim);
+}
+.invite-row .ctrl { white-space: nowrap; }
+
+/* Impressum / Datenschutz */
+.legal { max-width: 760px; margin-top: 10px; color: var(--ink-dim); font-size: 15px; line-height: 1.7; }
+.legal h2 { margin: 28px 0 8px; font-size: 19px; color: var(--ink); }
+.legal h3 { margin: 20px 0 6px; font-size: 16px; color: var(--ink); }
+.legal p, .legal ul { margin: 0 0 10px; }
+.legal ul { padding-left: 20px; }
+.legal li { margin-bottom: 6px; }
+.foot-legal { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }

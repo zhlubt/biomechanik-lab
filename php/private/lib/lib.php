@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/llm.php';
@@ -90,19 +91,51 @@ function course_titles(string $course, ?string $lesson = null): array {
     return ['course' => $course, 'module' => '', 'lesson' => $lesson ?? ''];
 }
 
+/**
+ * Statische Datei mit Versionsstempel: „app.js?v=1759500000".
+ * Ohne das liefert der Browser nach einem Deploy weiter die alte Datei aus - man
+ * sieht Aenderungen erst nach hartem Neuladen (ist beim Methoden-Modul passiert).
+ * Der Stempel ist die Mtime der Datei, aendert sich also genau dann, wenn noetig.
+ */
+function asset(string $file): string {
+    $path = __DIR__ . '/../../public/' . $file;          // lokal: php/public/
+    if (!is_file($path)) $path = $_SERVER['DOCUMENT_ROOT'] . '/' . $file;  // Server: /var/www/html/
+    $v = is_file($path) ? (string)filemtime($path) : '0';
+    return $file . '?v=' . $v;
+}
+
+/**
+ * Einheitliche Fußzeile mit den Pflichtangaben. EINE Stelle, damit Impressum und
+ * Datenschutz wirklich auf jeder Seite stehen (§ 5 DDG).
+ */
+function site_footer(string $right = ''): string {
+    $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+    $extra = ($right !== '' && $right !== 'Beschreibungs-Lab') ? '<span>' . $h($right) . '</span>' : '';
+    return '<footer>'
+         . '<span><b>Beschreibungs-Lab</b> · Zentrum für Hochschullehre · Universität Bayreuth</span>'
+         . '<span class="foot-legal">'
+         .   $extra
+         .   '<a href="impressum.php">Impressum</a>'
+         .   '<a href="impressum.php#datenschutz">Datenschutz</a>'
+         . '</span>'
+         . '</footer>';
+}
+
 /** Header-Navigation mit Anmeldestatus (für alle öffentlichen Seiten). */
 function auth_nav_html(): string {
     $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
     $u = current_user();
     $btn = 'class="ctrl" style="padding:6px 10px;font-size:12px;text-decoration:none"';
     if ($u === null) {
-        return '<a href="konto.php" ' . $btn . '>▶ Loslegen</a>';
+        return '<a href="konto.php" ' . $btn . '>Loslegen</a>'
+             . '<a href="pflege.php" ' . $btn . '>Pflege</a>';
     }
     $out = '<span style="font-size:12px;color:var(--ink-mute)">Hallo, ' . $h($u['name']) . '</span>';
     $out .= '<a href="meine-abgaben.php" ' . $btn . '>Meine Abgaben</a>';
     if ($u['role'] === 'teacher') {
         $out .= '<a href="auswertung.php" ' . $btn . '>Auswertung</a>';
-        $out .= '<a href="pflege.php" ' . $btn . '>✏ Pflege</a>';
+        $out .= '<a href="nutzer.php" ' . $btn . '>Nutzer</a>';
+        $out .= '<a href="pflege.php" ' . $btn . '>Pflege</a>';
     }
     $out .= '<a href="konto.php?logout=1" ' . $btn . '>Abmelden</a>';
     return $out;
@@ -111,6 +144,9 @@ function auth_nav_html(): string {
 /* ---------- Abgaben (Submissions) ---------- */
 
 function save_submission(int $userId, array $loc, string $text, array $markers, string $model): int {
+    // Adresse immer gesaeubert ablegen - sonst landet beliebiger Eingabetext in der DB
+    // und spaeter in Auswertungs-Links.
+    $loc = ['course' => ex_safe($loc['course']), 'lesson' => ex_safe($loc['lesson']), 'exercise' => ex_safe($loc['exercise'])];
     $st = db()->prepare(
         'INSERT INTO submissions (user_id, course, lesson, exercise, student_text, markers_json, marker_count, model)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
@@ -157,6 +193,62 @@ function submission_overview(): array {
            FROM submissions GROUP BY course, lesson, exercise ORDER BY last_at DESC'
     )->fetchAll();
     return $rows;
+}
+
+/* ---------- Nutzer- und Datenverwaltung (DSGVO) ---------- */
+
+/** Eine eigene Abgabe löschen. Gibt true zurück, wenn sie wirklich der/dem Nutzer:in gehörte. */
+function delete_submission(int $submissionId, int $userId): bool {
+    // user_id in der WHERE-Klausel: so kann niemand fremde Abgaben löschen,
+    // auch nicht mit geratener ID.
+    $st = db()->prepare('DELETE FROM submissions WHERE id = ? AND user_id = ?');
+    $st->execute([$submissionId, $userId]);
+    return $st->rowCount() > 0;
+}
+
+/** Konto samt aller Abgaben löschen (submissions hängen per ON DELETE CASCADE dran). */
+function delete_user(int $userId): bool {
+    $st = db()->prepare('DELETE FROM users WHERE id = ?');
+    $st->execute([$userId]);
+    return $st->rowCount() > 0;
+}
+
+/** Alles, was zu einer Person gespeichert ist — für Auskunft und Mitnahme (Art. 15/20 DSGVO). */
+function export_user_data(int $userId): array {
+    $st = db()->prepare('SELECT id, email, name, role, created_at FROM users WHERE id = ?');
+    $st->execute([$userId]);
+    $u = $st->fetch();
+    if (!$u) return [];
+    // Geräte-Konten tragen eine synthetische Adresse — die ist kein Kontaktdatum.
+    if (str_ends_with((string)$u['email'], '@biomech.local')) $u['email'] = null;
+
+    $out = [];
+    foreach (list_user_submissions($userId) as $r) {
+        $out[] = [
+            'uebung'       => $r['course'] . '/' . $r['lesson'] . '/' . $r['exercise'],
+            'zeitpunkt'    => $r['created_at'],
+            'beschreibung' => $r['student_text'],
+            'modell'       => $r['model'],
+            'hinweise'     => json_decode($r['markers_json'] ?? '[]', true) ?: [],
+        ];
+    }
+    return [
+        'erzeugt_am' => gmdate('c'),
+        'konto'      => $u,
+        'abgaben'    => $out,
+    ];
+}
+
+/** Nutzerliste mit Abgabenzahl — für die Lehrenden-Verwaltung. */
+function list_users_with_counts(): array {
+    return db()->query(
+        'SELECT u.id, u.name, u.email, u.role, u.created_at,
+                (u.device_token IS NOT NULL) AS is_device,
+                COUNT(s.id) AS n_subs, MAX(s.created_at) AS last_at
+           FROM users u LEFT JOIN submissions s ON s.user_id = u.id
+          GROUP BY u.id
+          ORDER BY (last_at IS NULL), last_at DESC, u.id DESC'
+    )->fetchAll();
 }
 
 /** Pflegbare Freitext-/Prompt-Felder. */

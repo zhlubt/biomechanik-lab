@@ -1,0 +1,30 @@
+#!/usr/bin/expect
+# Fuehrt eine SFTP-Befehlsdatei mit Passwort-Anmeldung aus.
+#
+# Warum: lftp und sshpass sind x86_64-Binaries und seit dem Wegfall von Rosetta
+# auf diesem Mac nicht mehr lauffaehig. expect und sftp liegen als arm64 vor.
+#
+# Aufruf:  SFTP_PW=… ./sftp-run.exp <user> <host> <port> <befehlsdatei>
+# Das Passwort kommt NUR ueber die Umgebung, nie ueber die Kommandozeile
+# (sonst stuende es in der Prozessliste).
+
+set timeout 300
+set user  [lindex $argv 0]
+set host  [lindex $argv 1]
+set port  [lindex $argv 2]
+set batch [lindex $argv 3]
+
+if {![info exists env(SFTP_PW)]} { puts "SFTP_PW fehlt in der Umgebung"; exit 2 }
+set pw $env(SFTP_PW)
+
+spawn sftp -oBatchMode=no -oStrictHostKeyChecking=accept-new -oNumberOfPasswordPrompts=1 \
+           -P $port -b $batch $user@$host
+
+expect {
+    -re "(?i)password:" { send -- "$pw\r"; exp_continue }
+    -re "(?i)are you sure you want to continue connecting" { send -- "yes\r"; exp_continue }
+    -re "(?i)permission denied" { puts "\nAnmeldung abgelehnt"; exit 3 }
+    eof
+}
+catch wait result
+exit [lindex $result 3]

@@ -18,7 +18,8 @@ function ex_card(array $loc, array $ex, array $done): void {
     $kind = exercise_kind($ex);
     $exId = $loc['course'] . '/' . $loc['lesson'] . '/' . $loc['exercise'];
     $kindLabel = $kind === 'video' ? 'Video-Analyse' : ($kind === 'model3d' ? '3D-Modell' : ($kind === 'animation' ? 'Simulation' : 'Medium'));
-    $icon = $kind === 'video' ? '▶' : ($kind === 'model3d' ? '🦴' : '📈');
+    // Schlichte Glyphen statt Piktogrammen (Hausregel: Symbole minimalistisch).
+    $icon = $kind === 'video' ? '▷' : ($kind === 'model3d' ? '◳' : ($kind === 'image' ? '◱' : '◰'));
     $thumb = trim((string)($ex['thumbnail'] ?? ''));
     $isDone = isset($done[$exId]);
     ?>

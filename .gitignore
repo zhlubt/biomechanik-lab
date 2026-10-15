@@ -49,3 +49,6 @@ php/private/data/
 *.sqlite-shm
 *.sqlite-wal
 *.sqlite3
+
+# Prod-Datensicherungen (personenbezogen) - nie ins Repo
+backup/

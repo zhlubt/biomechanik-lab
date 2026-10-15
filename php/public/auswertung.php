@@ -22,7 +22,7 @@ if ($exParam) {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Auswertung · Biomechanik-Lab</title>
-<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="<?= esc(asset('styles.css')) ?>" />
 </head>
 <body>
 <div class="shell">
@@ -36,7 +36,8 @@ if ($exParam) {
 ?>
   <nav class="breadcrumbs"><a href="index.php">Übersicht</a> <span>›</span> <b>Auswertung</b></nav>
   <h1 class="title">Auswertung der Abgaben</h1>
-  <p class="subtitle">Übungen, zu denen Studierende Beschreibungen abgegeben haben. Klick auf eine Übung für die Detailansicht.</p>
+  <p class="subtitle">Übungen, zu denen Studierende Beschreibungen abgegeben haben. Klick auf eine Übung für die Detailansicht.
+     Konten verwalten und löschen: <a href="nutzer.php">Nutzerverwaltung</a>.</p>
 
   <?php if (!$overview): ?>
     <p class="admin-note" style="margin-top:18px">Es liegen noch keine Abgaben vor.</p>
@@ -100,7 +101,7 @@ if ($exParam) {
   <?php endif; ?>
 <?php endif; ?>
 
-  <footer><span><b>Beschreibungs-Lab</b> · Lehrenden-Auswertung · Universität Bayreuth</span><span>PHP-Variante</span></footer>
+  <?= site_footer('Auswertung') ?>
 </div>
 </body>
 </html>

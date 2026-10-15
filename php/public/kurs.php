@@ -12,7 +12,7 @@ $course = $courses[$id] ?? null;
 
 if ($course === null) {
     http_response_code(404);
-    echo '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="styles.css"><div class="shell"><h1 class="title">Kurs nicht gefunden</h1><p class="subtitle"><a href="index.php">← Zur Übersicht</a></p></div>';
+    echo '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="' . asset('styles.css') . '"><div class="shell"><h1 class="title">Kurs nicht gefunden</h1><p class="subtitle"><a href="index.php">← Zur Übersicht</a></p></div>';
     exit;
 }
 $user = current_user();
@@ -24,7 +24,7 @@ $done = $user ? user_done_exercises((int)$user['id']) : [];
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title><?= esc($course['title']) ?> · Biomechanik-Lab</title>
-<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="<?= esc(asset('styles.css')) ?>" />
 </head>
 <body>
 <div class="shell">
@@ -49,10 +49,7 @@ $done = $user ? user_done_exercises((int)$user['id']) : [];
     </section>
   <?php endforeach; ?>
 
-  <footer>
-    <span><b>Beschreibungs-Lab</b> · <?= esc($course['title']) ?> · Universität Bayreuth</span>
-    <span>PHP-Variante</span>
-  </footer>
+  <?= site_footer($course['title']) ?>
 </div>
 
 <script>

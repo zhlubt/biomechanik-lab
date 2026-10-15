@@ -4,7 +4,7 @@
  * Prosa) zurück in die Content-JSON. Nur mit gültiger Pflege-Anmeldung (Session).
  */
 require __DIR__ . '/_boot.php';
-session_start();
+app_session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 if (empty($_SESSION['pflege_auth'])) {
@@ -12,6 +12,7 @@ if (empty($_SESSION['pflege_auth'])) {
     echo json_encode(['error' => 'Nicht angemeldet.']);
     exit;
 }
+csrf_require();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Nur POST.']);

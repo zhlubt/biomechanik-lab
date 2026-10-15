@@ -6,6 +6,7 @@
  */
 declare(strict_types=1);
 
+require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/db.php';
 
 const DEVICE_COOKIE = 'biomech_device';
@@ -13,7 +14,7 @@ const DEVICE_TTL = 31536000; // 1 Jahr
 
 /** Session starten und – falls vorhanden – per Geräte-Cookie automatisch anmelden. */
 function auth_boot(): void {
-    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    app_session_start();
     if (!empty($_SESSION['uid'])) return;
     $tok = $_COOKIE[DEVICE_COOKIE] ?? '';
     if ($tok === '') return;
@@ -32,7 +33,7 @@ function device_cookie_set(string $token): void {
     setcookie(DEVICE_COOKIE, $token, [
         'expires'  => time() + DEVICE_TTL,
         'path'     => '/',
-        'secure'   => (($_SERVER['HTTPS'] ?? '') !== '' && ($_SERVER['HTTPS'] ?? '') !== 'off'),
+        'secure'   => is_https(),
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -55,11 +56,19 @@ function current_user(): ?array {
 function is_logged_in(): bool { return current_user() !== null; }
 function is_teacher(): bool { $u = current_user(); return $u !== null && $u['role'] === 'teacher'; }
 
-/** Lehrenden-Code prüfen. */
+/**
+ * Lehrenden-Code prüfen.
+ *
+ * Bewusst OHNE Rückfall auf PFLEGE_PASSWORD: ein Lehrenden-Konto sieht die
+ * Abgaben ALLER Studierenden. Solange beides derselbe Wert war, öffnete das
+ * Pflege-Passwort zugleich sämtliche personenbezogenen Daten. Getrennte
+ * Schlüssel = getrennte Folgen, wenn einer davon durchsickert.
+ * Ist TEACHER_CODE nicht gesetzt, kann sich niemand als Lehrende:r anlegen.
+ */
 function teacher_code_ok(string $code): bool {
-    $expected = app_env('TEACHER_CODE');
-    if (!$expected) $expected = app_env('PFLEGE_PASSWORD');
-    return $expected !== null && $expected !== '' && hash_equals($expected, $code);
+    $expected = (string)(app_env('TEACHER_CODE') ?? '');
+    if ($expected === '' || $code === '') return false;
+    return hash_equals($expected, $code);
 }
 
 /**
@@ -74,7 +83,11 @@ function auth_register(string $email, string $pass, string $name, bool $wantTeac
 
     $role = 'student';
     if ($wantTeacher) {
-        if (!teacher_code_ok($teacherCode)) return [false, 'Lehrenden-Code falsch oder nicht gesetzt.'];
+        if (!teacher_code_ok($teacherCode)) {
+            return [false, app_env('TEACHER_CODE')
+                ? 'Lehrenden-Code falsch.'
+                : 'Es ist kein Lehrenden-Code hinterlegt (TEACHER_CODE in private/.env). Bitte an die Administration wenden.'];
+        }
         $role = 'teacher';
     }
 
@@ -95,15 +108,17 @@ function auth_register(string $email, string $pass, string $name, bool $wantTeac
  * Schnellstart ohne Passwort: nur Name. Erzeugt ein Geräte-Konto und setzt ein
  * langlebiges Cookie — die/der Studierende ist auf diesem Gerät dauerhaft erkannt.
  */
-function auth_quickstart(string $name): array {
+function auth_quickstart(string $name, string $role = 'student'): array {
     $name = trim($name);
     if ($name === '') return [false, 'Bitte einen Namen eingeben.'];
     if (mb_strlen($name) > 80) $name = mb_substr($name, 0, 80);
+    // Rolle kommt NIE aus einer Formulareingabe, sondern nur aus geprüftem Code (s. konto.php).
+    $role = ($role === 'teacher') ? 'teacher' : 'student';
 
     $token = bin2hex(random_bytes(16));
     $email = 'geraet-' . $token . '@biomech.local'; // synthetisch (Spalte ist NOT NULL UNIQUE)
-    $st = db()->prepare('INSERT INTO users (email, pass_hash, name, role, device_token) VALUES (?, ?, ?, "student", ?)');
-    $st->execute([$email, '', $name, $token]);
+    $st = db()->prepare('INSERT INTO users (email, pass_hash, name, role, device_token) VALUES (?, ?, ?, ?, ?)');
+    $st->execute([$email, '', $name, $role, $token]);
     $uid = (int)db()->lastInsertId();
     auth_boot();
     session_regenerate_id(true);
@@ -126,10 +141,11 @@ function auth_login(string $email, string $pass): array {
 }
 
 function auth_logout(): void {
-    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    app_session_start();
     unset($_SESSION['uid']);
     if (!headers_sent()) {
-        setcookie(DEVICE_COOKIE, '', ['expires' => time() - 3600, 'path' => '/']);
+        setcookie(DEVICE_COOKIE, '', ['expires' => time() - 3600, 'path' => '/',
+            'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
     }
 }
 

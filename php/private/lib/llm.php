@@ -1,7 +1,8 @@
 <?php
 /**
- * LLM-Provider-Abstraktion. Default = Anthropic (Claude). OpenAI (ChatGPT) als
- * austauschbarer Adapter (via LLM_PROVIDER=openai oder opts['provider']).
+ * LLM-Provider-Abstraktion. Drei Adapter: Anthropic (Claude), OpenAI (ChatGPT)
+ * und NHR@FAU (LLMs as a Service der Uni Erlangen-Nuernberg, OpenAI-kompatibel).
+ * Auswahl via LLM_PROVIDER oder opts['provider'].
  * Einheitliche Funktion llm_json(): erzwingt strukturiertes JSON nach Schema.
  * Unterstützt Text + Bild (Vision) für den Designer-Modus (Phase 5).
  *
@@ -32,15 +33,52 @@ function llm_http_post(string $url, array $headers, array $body, int $timeout = 
 
 /** Welcher Provider ist aktiv? */
 function llm_active_provider(?string $override = null): string {
-    $p = $override ?: app_env('LLM_PROVIDER', 'anthropic');
-    return ($p === 'openai') ? 'openai' : 'anthropic';
+    $p = $override ?: app_env('LLM_PROVIDER', 'nhr');
+    return in_array($p, ['openai', 'nhr', 'anthropic'], true) ? $p : 'nhr';
+}
+
+/** Modell-Default je Provider. */
+function llm_default_model(string $provider): string {
+    if ($provider === 'openai') return app_env('OPENAI_MODEL', 'gpt-5.2');
+    if ($provider === 'nhr')    return app_env('NHR_MODEL', NHR_MODEL_DEFAULT);
+    return app_env('ANTHROPIC_MODEL', ANTHROPIC_MODEL_DEFAULT);
 }
 
 /** Label „provider:model" für Protokollierung (welches Modell erzeugte das Feedback). */
 function llm_model_label(?string $providerOverride = null): string {
     $p = llm_active_provider($providerOverride);
-    $m = $p === 'openai' ? app_env('OPENAI_MODEL', 'gpt-5.2') : app_env('ANTHROPIC_MODEL', ANTHROPIC_MODEL_DEFAULT);
-    return $p . ':' . $m;
+    return $p . ':' . llm_default_model($p);
+}
+
+/**
+ * Woher kommt das Feedback? Wird Studierenden sichtbar angezeigt (Transparenz:
+ * welches Modell auf wessen Rechner hat den Text gelesen).
+ * Liefert ['model'=>…, 'service'=>…] - bei Anthropic/OpenAI die jeweilige Firma.
+ */
+function llm_provenance(?string $providerOverride = null): array {
+    $p = llm_active_provider($providerOverride);
+    $service = $p === 'nhr' ? NHR_SERVICE_LABEL : ($p === 'openai' ? 'OpenAI' : 'Anthropic');
+    return ['model' => llm_default_model($p), 'service' => $service];
+}
+
+/** Einzeiler fuer die Oberflaeche, z. B. „gpt-oss-120b · NHR@FAU Erlangen-Nürnberg". */
+function llm_provenance_text(?string $providerOverride = null): string {
+    $x = llm_provenance($providerOverride);
+    return $x['model'] . ' · ' . $x['service'];
+}
+
+/**
+ * Das in der Abgabe gespeicherte Kuerzel „provider:model" lesbar machen.
+ * Historische Eintraege (anthropic:…) bleiben korrekt beschriftet.
+ */
+function llm_label_pretty(string $stored): string {
+    if ($stored === '') return 'unbekannt';
+    $pos = strpos($stored, ':');
+    if ($pos === false) return $stored;
+    $prov = substr($stored, 0, $pos);
+    $model = substr($stored, $pos + 1);
+    $service = $prov === 'nhr' ? NHR_SERVICE_LABEL : ($prov === 'openai' ? 'OpenAI' : ($prov === 'anthropic' ? 'Anthropic' : $prov));
+    return $model . ' · ' . $service;
 }
 
 /** Nutzer-Inhalt normalisieren: String -> [text-Part]; sonst Part-Liste durchreichen.
@@ -66,9 +104,23 @@ function llm_json(array $a): array {
     $timeout  = (int)($a['timeout'] ?? 60);
     $model    = $a['model'] ?? null;
 
-    return $provider === 'openai'
-        ? llm_json_openai($system, $parts, $schema, $maxTok, $model, $timeout)
-        : llm_json_anthropic($system, $parts, $schema, $maxTok, $model, $timeout);
+    if ($provider === 'anthropic') {
+        return llm_json_anthropic($system, $parts, $schema, $maxTok, $model, $timeout);
+    }
+    if ($provider === 'nhr') {
+        // NHR@FAU faehrt ueberwiegend Reasoning-Modelle (Qwen3, DeepSeek): die Denkspur
+        // zaehlt gegen max_tokens. Zu knapp bemessen bricht die Antwort VOR dem JSON ab
+        // (finish_reason=length, content=null) - deshalb ein Mindestbudget.
+        $floor = (int)app_env('NHR_MAX_TOKENS_FLOOR', '4000');
+        return llm_json_oai_compatible(
+            'NHR@FAU',
+            rtrim(app_env('NHR_BASE_URL', NHR_BASE_URL_DEFAULT), '/') . '/chat/completions',
+            (string)(app_env('NHR_API_KEY') ?? ''),
+            $model ?: llm_default_model('nhr'),
+            $system, $parts, $schema, max($maxTok, $floor), $timeout
+        );
+    }
+    return llm_json_openai($system, $parts, $schema, $maxTok, $model, $timeout);
 }
 
 /* ---------- Anthropic ---------- */
@@ -144,5 +196,52 @@ function llm_json_openai(string $system, array $parts, array $schema, int $maxTo
     $text = $data['choices'][0]['message']['content'] ?? '';
     $parsed = json_decode((string)$text, true);
     if (!is_array($parsed)) throw new RuntimeException('OpenAI-Antwort war kein JSON.');
+    return $parsed;
+}
+
+/* ---------- Generischer OpenAI-kompatibler Adapter (NHR@FAU u. a.) ---------- */
+/**
+ * Spricht jeden Dienst mit /chat/completions-Schnittstelle an. $label geht nur in
+ * Fehlermeldungen ein, damit im Log steht, welcher Dienst geklemmt hat.
+ */
+function llm_json_oai_compatible(string $label, string $url, string $apiKey, string $model,
+                                 string $system, array $parts, array $schema, int $maxTok, int $timeout): array {
+    if ($apiKey === '') throw new RuntimeException($label . ': API-Key fehlt (NHR_API_KEY in private/.env).');
+
+    $userContent = [];
+    foreach ($parts as $p) {
+        if (($p['type'] ?? '') === 'image') {
+            $userContent[] = ['type' => 'image_url', 'image_url' => ['url' => 'data:' . $p['mime'] . ';base64,' . $p['data_b64']]];
+        } else {
+            $userContent[] = ['type' => 'text', 'text' => (string)($p['text'] ?? '')];
+        }
+    }
+    $body = [
+        'model' => $model,
+        'max_tokens' => $maxTok,
+        'messages' => [
+            ['role' => 'system', 'content' => $system],
+            ['role' => 'user', 'content' => $userContent],
+        ],
+        'response_format' => ['type' => 'json_schema', 'json_schema' => ['name' => 'result', 'strict' => true, 'schema' => $schema]],
+    ];
+    [$code, $resp, $err] = llm_http_post($url, [
+        'content-type: application/json',
+        'authorization: Bearer ' . $apiKey,
+    ], $body, $timeout);
+    if ($resp === '') throw new RuntimeException('Netzwerkfehler (' . $label . '): ' . $err);
+    // Bewusst OHNE Antwortkoerper: der kann die gesendete Anfrage spiegeln.
+    if ($code < 200 || $code >= 300) throw new RuntimeException($label . '-HTTP ' . $code);
+
+    $data   = json_decode($resp, true);
+    $choice = $data['choices'][0] ?? [];
+    $text   = $choice['message']['content'] ?? null;
+
+    // Reasoning-Modell ohne Budget fuer die Antwort: die Denkspur hat max_tokens aufgebraucht.
+    if (($text === null || $text === '') && ($choice['finish_reason'] ?? '') === 'length') {
+        throw new RuntimeException($label . ': Antwort nach der Denkspur abgeschnitten (max_tokens zu klein für ' . $model . ').');
+    }
+    $parsed = json_decode((string)$text, true);
+    if (!is_array($parsed)) throw new RuntimeException($label . '-Antwort war kein JSON.');
     return $parsed;
 }

@@ -5,10 +5,11 @@
  * und schreibt den Pfad ins Feld `thumbnail` der Übungs-JSON.
  */
 require __DIR__ . '/_boot.php';
-session_start();
+app_session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 if (empty($_SESSION['pflege_auth'])) { http_response_code(403); echo json_encode(['error' => 'Nicht angemeldet.']); exit; }
+csrf_require();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Nur POST.']); exit; }
 
 $course   = ex_safe((string)($_POST['course'] ?? ''));

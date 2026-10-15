@@ -5,7 +5,7 @@
  * Passwort: PFLEGE_PASSWORD in private/.env.
  */
 require __DIR__ . '/_boot.php';
-session_start();
+app_session_start();
 function esc($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
 if (isset($_GET['logout'])) { $_SESSION = []; session_destroy(); header('Location: pflege.php'); exit; }
@@ -13,17 +13,24 @@ if (isset($_GET['logout'])) { $_SESSION = []; session_destroy(); header('Locatio
 $pw = app_env('PFLEGE_PASSWORD');
 $loginError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
-    if ($pw && hash_equals($pw, (string)$_POST['password'])) {
+    // Das Pflege-Passwort ist zugleich der Lehrenden-Code und damit der Schluessel
+    // zu ALLEN Abgaben. Raten muss teuer sein.
+    $rl = rate_check('pflege:ip:' . client_ip(), 2, 900, 10);
+    if (!$rl['ok']) {
+        $loginError = 'Zu viele Versuche. Bitte ' . $rl['retry_after'] . ' s warten.';
+    } elseif ($pw && hash_equals($pw, (string)$_POST['password'])) {
+        session_regenerate_id(true);
         $_SESSION['pflege_auth'] = true;
         header('Location: pflege.php' . (isset($_GET['ex']) ? '?ex=' . urlencode($_GET['ex']) : ''));
         exit;
+    } else {
+        $loginError = 'Falsches Passwort.';
     }
-    $loginError = 'Falsches Passwort.';
 }
 $authed = !empty($_SESSION['pflege_auth']);
 
 header('Content-Type: text/html; charset=utf-8');
-echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Übungen pflegen · Biomechanik-Lab</title><link rel="stylesheet" href="styles.css"></head><body><div class="shell">';
+echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Übungen pflegen · Biomechanik-Lab</title><link rel="stylesheet" href="' . asset('styles.css') . '"></head><body><div class="shell">';
 
 if (!$authed) {
     if (!$pw) {
@@ -33,6 +40,7 @@ if (!$authed) {
     echo '<div class="admin-head"><h1 class="title" style="margin-bottom:6px">Anmeldung Pflege</h1><a class="ctrl" href="index.php" style="text-decoration:none">← Startseite</a></div>';
     if ($loginError) echo '<p class="save-err" style="margin-top:10px">⚠ ' . esc($loginError) . '</p>';
     echo '<form method="post" class="form" style="margin-top:18px;max-width:420px">'
+       . csrf_field()
        . '<label class="field"><span class="field-label">Passwort</span><input type="password" name="password" autofocus></label>'
        . '<div class="form-actions"><button class="ctrl primary" type="submit">Anmelden</button></div></form>';
     echo '</div></body></html>';
@@ -40,6 +48,40 @@ if (!$authed) {
 }
 
 // --- angemeldet ---
+
+/**
+ * Einladungslink für Lehrpersonen. Er trägt den TEACHER_CODE und wird NUR hier
+ * gezeigt — die Pflege ist passwortgeschützt, also der richtige Ort dafür.
+ * Wer den Link öffnet, braucht nur noch seinen Namen einzugeben.
+ */
+function teacher_invite_link(): string {
+    $code = (string)(app_env('TEACHER_CODE') ?? '');
+    if ($code === '') return '';
+    $scheme = is_https() ? 'https' : 'http';
+    $host   = (string)($_SERVER['HTTP_HOST'] ?? 'biomechanik.zhl-ubt.de');
+    $base   = rtrim(dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/pflege.php')), '/');
+    return $scheme . '://' . $host . $base . '/konto.php?lehrcode=' . rawurlencode($code);
+}
+
+$inviteLink = teacher_invite_link();
+if ($inviteLink !== '' && !isset($_GET['neu']) && !isset($_GET['ex'])) {
+    echo '<section class="invite">'
+       . '<div class="invite-head"><b>Einladungslink für Lehrpersonen</b>'
+       . '<span class="field-hint">Wer diesen Link öffnet, gibt nur seinen Namen ein und ist als Lehrperson angemeldet — mit Zugriff auf Abgaben und Nutzerverwaltung. Nicht öffentlich posten.</span></div>'
+       . '<div class="invite-row">'
+       .   '<input type="text" id="inviteLink" readonly value="' . esc($inviteLink) . '">'
+       .   '<button class="ctrl" type="button" id="inviteCopy">Kopieren</button>'
+       . '</div>'
+       . '</section>'
+       . '<script>document.getElementById("inviteCopy").addEventListener("click",function(){'
+       . 'var f=document.getElementById("inviteLink");f.select();f.setSelectionRange(0,9999);'
+       . 'var done=function(){this.textContent="Kopiert";var b=this;setTimeout(function(){b.textContent="Kopieren";},1600);}.bind(this);'
+       . 'if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(f.value).then(done,done);}'
+       . 'else{try{document.execCommand("copy");done();}catch(e){}}});</script>';
+} elseif ($inviteLink === '' && !isset($_GET['neu']) && !isset($_GET['ex'])) {
+    echo '<p class="admin-note">Kein <code>TEACHER_CODE</code> in <code>private/.env</code> hinterlegt — '
+       . 'ohne ihn kann sich niemand als Lehrperson anmelden.</p>';
+}
 
 // Neue Übung anlegen
 if (isset($_GET['neu'])) {
@@ -49,7 +91,7 @@ if (isset($_GET['neu'])) {
     echo '<p class="admin-note">Lege das Grundgerüst an (Adresse, Medium, Prompt, Musterlösung). Feinschliff danach im Editor; Legende/Glossar bei Bedarf direkt in der JSON.</p>';
     ?>
     <div class="designer">
-      <div class="designer-head">🪄 <b>Aus Bild per KI vorbefüllen</b> <span class="field-hint">(optional) — lade ein Bild des Mediums (Diagramm, Videostandbild, 3D-Ansicht) hoch; die KI entwirft Titel, Aufgabe, Prompt, Musterlösung &amp; Kategorien.</span></div>
+      <div class="designer-head"><b>Aus Bild per KI vorbefüllen</b> <span class="field-hint">(optional) — lade ein Bild des Mediums (Diagramm, Videostandbild, 3D-Ansicht) hoch; die KI entwirft Titel, Aufgabe, Prompt, Musterlösung &amp; Kategorien.</span></div>
       <div class="designer-row">
         <input type="file" id="dz_image" accept="image/png,image/jpeg,image/webp,image/gif">
         <input id="dz_hint" placeholder="Optionaler Hinweis (z. B. „Sprunggelenk-Winkel im Absprung")" style="flex:1;min-width:220px">
@@ -58,6 +100,7 @@ if (isset($_GET['neu'])) {
       </div>
     </div>
     <form class="form" method="post" action="create.php" enctype="multipart/form-data" style="margin-top:18px">
+      <?= csrf_field() ?>
       <div class="lab" style="grid-template-columns:1fr 1fr;gap:14px">
         <label class="field"><span class="field-label">Kurs-ID <span class="field-hint">(z. B. trainingswissenschaft)</span></span><input name="course" required pattern="[a-z0-9_-]+"></label>
         <label class="field"><span class="field-label">Kurs-Titel</span><input name="courseTitle" placeholder="Trainingswissenschaft"></label>
@@ -98,6 +141,7 @@ if (isset($_GET['neu'])) {
     </form>
     <script>
     (function () {
+      var CSRF = <?= json_encode(csrf_token()) ?>;
       var go = document.getElementById('dz_go'), st = document.getElementById('dz_status'),
           img = document.getElementById('dz_image'), hint = document.getElementById('dz_hint');
       function setVal(name, val) { var el = document.querySelector('[name="' + name + '"]'); if (el && val != null) el.value = val; }
@@ -105,6 +149,7 @@ if (isset($_GET['neu'])) {
         if (!img.files || !img.files[0]) { st.textContent = '⚠ Bitte erst ein Bild wählen.'; st.className = 'field-hint save-err'; return; }
         var fd = new FormData(); fd.append('image', img.files[0]); fd.append('hint', hint.value || '');
         go.disabled = true; st.textContent = 'KI entwirft … (kann ~15 s dauern)'; st.className = 'field-hint';
+        fd.append('csrf', CSRF);
         fetch('generate-draft.php', { method: 'POST', body: fd })
           .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
           .then(function (r) {
@@ -136,7 +181,7 @@ if ($editLoc) {
     if ($f === null) { echo '<h1 class="title">Übung nicht gefunden</h1><a class="ctrl" href="pflege.php">← Übersicht</a></div></body></html>'; exit; }
     $exId = $editLoc['course'] . '/' . $editLoc['lesson'] . '/' . $editLoc['exercise'];
     echo '<div class="admin-head"><div><h1 class="title" style="margin-bottom:6px">' . esc($f['title'] ?: 'Übung pflegen') . '</h1><p class="subtitle" style="margin-bottom:0"><code>' . esc($exId) . '</code></p></div>'
-       . '<div style="display:flex;gap:8px"><a class="ctrl" href="uebung.php?ex=' . esc(urlencode($exId)) . '" style="text-decoration:none">👁 Ansehen</a><a class="ctrl" href="pflege.php" style="text-decoration:none">← Übersicht</a><a class="ctrl" href="pflege.php?logout=1" style="text-decoration:none">Abmelden</a></div></div>';
+       . '<div style="display:flex;gap:8px"><a class="ctrl" href="uebung.php?ex=' . esc(urlencode($exId)) . '" style="text-decoration:none">Ansehen</a><a class="ctrl" href="pflege.php" style="text-decoration:none">← Übersicht</a><a class="ctrl" href="pflege.php?logout=1" style="text-decoration:none">Abmelden</a></div></div>';
     ?>
     <div class="form" id="form" style="margin-top:22px">
       <label class="field"><span class="field-label">Titel</span><input id="f_title" value="<?= esc($f['title']) ?>"></label>
@@ -169,6 +214,7 @@ if ($editLoc) {
     </div>
     <script>
       var LOC = <?= json_encode($editLoc, JSON_UNESCAPED_SLASHES) ?>;
+      var CSRF = <?= json_encode(csrf_token()) ?>;
       document.getElementById('saveBtn').addEventListener('click', function () {
         var btn = this, st = document.getElementById('status');
         btn.disabled = true; st.textContent = ''; st.className = '';
@@ -182,7 +228,7 @@ if ($editLoc) {
           modelSolution: document.getElementById('f_solution').value,
           targetConcepts: document.getElementById('f_concepts').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean)
         };
-        fetch('content.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({}, LOC, { fields: fields })) })
+        fetch('content.php', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF }, body: JSON.stringify(Object.assign({}, LOC, { fields: fields })) })
           .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
           .then(function (r) { if (!r.ok) throw new Error((r.j && r.j.error) || 'Fehler'); st.textContent = '✓ Gespeichert.'; st.className = 'save-ok'; })
           .catch(function (e) { st.textContent = '⚠ ' + e.message; st.className = 'save-err'; })
@@ -197,6 +243,7 @@ if ($editLoc) {
         fd.append('course', LOC.course); fd.append('lesson', LOC.lesson); fd.append('exercise', LOC.exercise);
         fd.append('image', fileEl.files[0]);
         btn.disabled = true; st.textContent = 'lädt …'; st.className = 'field-hint';
+        fd.append('csrf', CSRF);
         fetch('thumbnail.php', { method: 'POST', body: fd })
           .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
           .then(function (r) {
@@ -227,7 +274,7 @@ else {
         $exId = $loc['course'] . '/' . $loc['lesson'] . '/' . $loc['exercise'];
         echo '<li class="admin-row"><div><div style="font-weight:600">' . esc($ex['title'] ?? $exId) . '</div>'
            . '<div class="meta">' . esc($ex['course']['title'] ?? '') . ' · ' . esc($ex['lesson']['title'] ?? '') . ' · ' . esc($exId) . '</div></div>'
-           . '<div class="actions"><a class="ctrl" href="uebung.php?ex=' . esc(urlencode($exId)) . '">👁 Ansehen</a>'
+           . '<div class="actions"><a class="ctrl" href="uebung.php?ex=' . esc(urlencode($exId)) . '">Ansehen</a>'
            . '<a class="ctrl primary" href="pflege.php?ex=' . esc(urlencode($exId)) . '">✏ Pflegen</a></div></li>';
     }
     echo '</ul>';

@@ -23,41 +23,48 @@ $ex = $loc ? load_exercise($loc) : null;
 
 if ($ex === null) {
     http_response_code(404);
-    echo '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="styles.css"><div class="shell"><h1 class="title">Keine Übung gefunden</h1><p class="subtitle">Lege eine Übung unter content/&lt;course&gt;/&lt;lesson&gt;/&lt;exercise&gt;.json an.</p></div>';
+    echo '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="' . asset('styles.css') . '"><div class="shell"><h1 class="title">Keine Übung gefunden</h1><p class="subtitle">Lege eine Übung unter content/&lt;course&gt;/&lt;lesson&gt;/&lt;exercise&gt;.json an.</p></div>';
     exit;
 }
 
 // Medien nach Typ/Komponente auflösen
-$jumpLab = null; $knee = null; $embed = null; $video = null; $model = null;
+$jumpLab = null; $knee = null; $embed = null; $video = null; $model = null; $image = null;
 foreach (($ex['media'] ?? []) as $m) {
     if (($m['type'] ?? '') === 'interactive' && ($m['component'] ?? '') === 'JumpForceLab') $jumpLab = $m;
     if (($m['type'] ?? '') === 'interactive' && ($m['component'] ?? '') === 'KneeFrontal') $knee = $m;
     if (($m['type'] ?? '') === 'embed') $embed = $m;
     if (($m['type'] ?? '') === 'video' && $video === null) $video = $m;
     if (($m['type'] ?? '') === 'model3d' && $model === null) $model = $m;
+    if (($m['type'] ?? '') === 'image' && $image === null) $image = $m;
 }
-// Primär-Medium: Video > 3D-Modell > Sprung-Simulation
+// Primär-Medium: Video > 3D-Modell > Standbild (Diagramm/Messschrieb) > Sprung-Simulation
 $isVideo = $video !== null;
 $isModel = $model !== null;
-$primary = $isVideo ? $video : ($isModel ? $model : $jumpLab);
+$isImage = !$isVideo && !$isModel && $image !== null;
+$primary = $isVideo ? $video : ($isModel ? $model : ($isImage ? $image : $jumpLab));
 $cfg = ($primary['config'] ?? []);
-$useTimestamps = ((bool)($ex['timestampMode'] ?? false) || $isVideo) && !$isModel;
+// Standbild und 3D-Modell haben keine Zeitachse -> weder Transport noch Zeitstempel.
+$useTimestamps = ((bool)($ex['timestampMode'] ?? false) || $isVideo) && !$isModel && !$isImage;
 
 // Client-sichere Daten (OHNE feedbackPrompt!)
 $client = [
     'locator'     => $loc,
     'media'       => [
-        'kind'        => $isVideo ? 'video' : ($isModel ? 'model3d' : 'jumpforce'),
-        'src'         => $isVideo ? ($video['src'] ?? '') : ($isModel ? ($model['src'] ?? '') : null),
+        'kind'        => $isVideo ? 'video' : ($isModel ? 'model3d' : ($isImage ? 'image' : 'jumpforce')),
+        'src'         => $isVideo ? ($video['src'] ?? '') : ($isModel ? ($model['src'] ?? '') : ($isImage ? ($image['src'] ?? '') : null)),
         'durationSec' => $cfg['durationSec'] ?? 3.0,
         'fps'         => $cfg['fps'] ?? 30,
+        // Methoden-Fundus: rein datengetrieben, siehe public/media-methods.js
+        'methods'     => $primary['methods'] ?? null,
     ],
     'timestamps'  => $useTimestamps,
     'phases'      => $cfg['phases'] ?? [],
     'categories'  => $ex['feedbackCategories'] ?? [],
     'demo'        => $ex['demo'] ?? ['studentText' => '', 'feedback' => ['markers' => []]],
     'loggedIn'    => is_logged_in(),
+    'csrf'        => csrf_token(),
 ];
+$appTitle = (string)($ex['course']['appTitle'] ?? 'Biomechanik-Lab');
 $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · ' : '';
 ?>
 <!doctype html>
@@ -65,8 +72,8 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title><?= esc($ex['title']) ?> · Biomechanik-Lab</title>
-<link rel="stylesheet" href="styles.css" />
+<title><?= esc($ex['title']) ?> · <?= esc($appTitle) ?></title>
+<link rel="stylesheet" href="<?= esc(asset('styles.css')) ?>" />
 </head>
 <body>
 <div class="shell">
@@ -75,7 +82,7 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
     <div class="brand">
       <div class="logo" aria-hidden="true"></div>
       <div>
-        <b>Biomechanik-Lab</b>
+        <b><?= esc($appTitle) ?></b>
         <small><?= esc($ex['course']['title'] ?? '') ?><?= !empty($ex['course']['module']) ? ' · ' . esc($ex['course']['module']) : '' ?></small>
       </div>
     </div>
@@ -112,6 +119,16 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
                 <span class="hint">Drehen: ziehen · Zoom: Mausrad / Pinch · Verschieben: Rechtsklick&nbsp;+&nbsp;ziehen</span>
               </div>
             </div>
+          <?php elseif ($isImage): ?>
+            <figure style="margin:0">
+              <div class="ro-figure" id="mediaHost">
+                <img src="<?= esc($image['src']) ?>" alt="<?= esc($image['alt'] ?? $image['label'] ?? 'Messdiagramm zur Übung') ?>"
+                     style="display:block;width:100%;height:auto;background:#11151d" />
+              </div>
+              <?php if (!empty($image['caption'])): ?>
+              <figcaption style="margin:10px 2px 0;color:#9aa6b6;font-size:13px;line-height:1.5"><?= esc($image['caption']) ?></figcaption>
+              <?php endif; ?>
+            </figure>
           <?php elseif ($isVideo): ?>
             <video id="vid" preload="metadata" playsinline style="display:block;width:100%;max-height:520px;background:#000;object-fit:contain">
               <source src="<?= esc($video['src']) ?>" type="video/mp4" />
@@ -120,7 +137,7 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
           <?php else: ?>
             <svg id="stage" class="stage" viewBox="0 0 720 460" preserveAspectRatio="xMidYMid meet" aria-label="Schematische Sprunganimation mit Kraftkurven"></svg>
           <?php endif; ?>
-          <?php if (!$isModel): ?>
+          <?php if (!$isModel && !$isImage): ?>
           <div class="scrub-wrap">
             <div class="scrub" id="scrub"><div class="track"><div class="fill"></div></div><div class="head"></div></div>
             <div class="phases" id="phases">
@@ -229,17 +246,32 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
   <section class="write">
     <h2>03 · Deine Beschreibung</h2>
     <p class="lead"><?= esc($ex['task']) ?></p>
+
+    <?php if (!is_logged_in()):
+      // Hinweis VOR dem Schreiben: Feedback braucht eine Anmeldung. Ohne diesen
+      // Hinweis merkt man das erst beim Klick auf „KI Feedback" - und verliert
+      // den bereits getippten Text beim Wechsel auf die Anmeldeseite.
+      $backHere = 'uebung.php?ex=' . urlencode($loc['course'] . '/' . $loc['lesson'] . '/' . $loc['exercise']);
+    ?>
+    <p class="login-first" id="loginFirst">
+      <span><b>Melde dich an, bevor du schreibst.</b>
+        Für das KI-Feedback brauchst du einen Namen — es dauert einen Moment.
+        Wenn du erst schreibst und dich dann anmeldest, ist dein Text weg.</span>
+      <a class="ctrl primary" href="konto.php?next=<?= esc(urlencode($backHere)) ?>">Jetzt loslegen</a>
+    </p>
+    <?php endif; ?>
+
     <div class="editor-shell" id="editorShell">
       <div class="editor-toolbar">
         <span class="live" id="liveLabel">live · Studierende:r tippt</span>
         <div style="margin-left:auto;display:flex;gap:8px">
-          <button class="ctrl demo-hint" id="skipType" style="padding:5px 10px;font-size:12px">⏭ Sofort fertig</button>
-          <button class="ctrl demo-hint" id="replayType" style="padding:5px 10px;font-size:12px">↻ Neu abspielen</button>
+          <button class="ctrl demo-hint" id="skipType" style="padding:5px 10px;font-size:12px" title="Tippanimation überspringen">Sofort fertig</button>
+          <button class="ctrl demo-hint" id="replayType" style="padding:5px 10px;font-size:12px" title="Beispieltext noch einmal tippen lassen">Beispiel neu</button>
         </div>
       </div>
       <?php if ($useTimestamps): ?>
       <div class="ts-bar">
-        <button class="ctrl" id="tsInsert" title="Aktuelle Videozeit als [m:ss.xx] an der Cursor-Position einfügen">⏱ Zeitstempel einfügen</button>
+        <button class="ctrl" id="tsInsert" title="Aktuelle Videozeit als [m:ss.xx] an der Cursor-Position einfügen">Zeitstempel einfügen</button>
         <span>Videozeit: <span class="ts-now" id="tsNow">0:00.00</span></span>
         <span style="margin-left:auto;color:var(--ink-mute)">Beschreibe jede Phase und benenne ihren Zeitpunkt im Video.</span>
       </div>
@@ -251,9 +283,15 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 9 9l-7 3 7 3 3 7 3-7 7-3-7-3z"/></svg>
           <span id="aiBtnLabel">KI Feedback</span>
         </button>
-        <button class="ctrl demo-hint" id="resetBtn">↺ Zurücksetzen</button>
+        <button class="ctrl" id="clearBtn" title="Textfeld leeren und selbst schreiben">Leeren</button>
+        <button class="ctrl demo-hint" id="resetBtn" title="Beispieltext wiederherstellen">Beispiel zurück</button>
         <span class="hint" id="wordCount">0 Wörter</span>
       </div>
+      <p class="hint" style="margin:10px 2px 0;line-height:1.5">
+        Das Feedback erzeugt das Modell <b><?= esc(llm_provenance()['model']) ?></b>
+        auf dem Rechencluster des <b><?= esc(llm_provenance()['service']) ?></b>.
+        Dein Text wird dorthin übertragen und hier gespeichert.
+      </p>
     </div>
   </section>
 
@@ -271,16 +309,15 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
     <div class="card expert" id="expertCard">
       <h3>05 · Vergleich mit Experten-Beschreibung</h3>
       <div class="body">
-        <div class="expert-body"><?= esc($ex['modelSolution'] ?? '') ?></div>
-        <div class="reveal"><button class="ctrl" id="revealExpert">👁 Experten-Beschreibung einblenden</button></div>
+        <!-- Inhalt wird erst auf Knopfdruck von loesung.php geholt — er steht bewusst
+             NICHT im Quelltext, sonst wäre er vor dem eigenen Schreiben lesbar. -->
+        <div class="expert-body" id="expertBody"></div>
+        <div class="reveal"><button class="ctrl" id="revealExpert"<?= empty($ex['modelSolution']) ? ' disabled' : '' ?>>Experten-Beschreibung einblenden</button></div>
       </div>
     </div>
   </section>
 
-  <footer>
-    <span><b>Beschreibungs-Lab · <?= esc($ex['course']['title'] ?? '') ?></b> · Universität Bayreuth</span>
-    <span>PHP-Variante · datengetrieben aus content/…/<?= esc($loc['exercise']) ?>.json</span>
-  </footer>
+  <?= site_footer($ex['course']['title'] ?? '') ?>
 </div>
 
 <script>window.EXERCISE = <?= json_encode($client, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
@@ -291,8 +328,9 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
   "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
 }}
 </script>
-<script type="module" src="model-viewer.js"></script>
+<script type="module" src="<?= esc(asset('model-viewer.js')) ?>"></script>
 <?php endif; ?>
-<script src="app.js"></script>
+<script src="<?= esc(asset('media-methods.js')) ?>"></script>
+<script src="<?= esc(asset('app.js')) ?>"></script>
 </body>
 </html>

@@ -17,7 +17,7 @@ $done = $user ? user_done_exercises((int)$user['id']) : [];
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Biomechanik-Lab · Übungsübersicht</title>
-<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="<?= esc(asset('styles.css')) ?>" />
 </head>
 <body>
 <div class="shell">
@@ -68,10 +68,7 @@ $done = $user ? user_done_exercises((int)$user['id']) : [];
     <?php endforeach; ?>
   <?php endif; ?>
 
-  <footer>
-    <span><b>Beschreibungs-Lab</b> · Trainingswissenschaft · Universität Bayreuth</span>
-    <span>PHP-Variante · sokratisches KI-Feedback</span>
-  </footer>
+  <?= site_footer('sokratisches KI-Feedback') ?>
 </div>
 
 <script>

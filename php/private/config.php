@@ -37,3 +37,10 @@ function app_env(string $key, ?string $default = null): ?string {
 }
 
 const ANTHROPIC_MODEL_DEFAULT = 'claude-opus-4-8';
+
+// NHR@FAU "LLMs as a Service" (Uni Erlangen-Nuernberg), OpenAI-kompatibles Gateway.
+// Default ist gpt-oss-120b: ~17 s statt ~30 s bei gleicher Zitattreue. Qwen3.6-35B-A3B
+// ist das Reasoning-Alternativmodell und kann zusaetzlich Bilder lesen (Designer-Modus).
+const NHR_BASE_URL_DEFAULT = 'https://hub.nhr.fau.de/api/llmgw/v1';
+const NHR_MODEL_DEFAULT    = 'gpt-oss-120b';
+const NHR_SERVICE_LABEL    = 'NHR@FAU Erlangen-Nürnberg';

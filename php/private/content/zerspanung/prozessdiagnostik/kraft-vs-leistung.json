@@ -1,0 +1,178 @@
+{
+  "id": "kraft-vs-leistung",
+  "course": {
+    "id": "zerspanung",
+    "title": "Zerspanungstechnik",
+    "module": "Prozessdiagnostik an der Werkzeugmaschine",
+    "appTitle": "Zerspanungs-Lab"
+  },
+  "lesson": {
+    "id": "prozessdiagnostik",
+    "title": "Prozesssignale lesen"
+  },
+  "number": "1",
+  "title": "Kraft und Leistung - warum sehen die beiden Kurven so ähnlich aus?",
+  "intro": "Derselbe Bearbeitungsvorgang, zwei Messstellen: oben die Zerspankraft aus einem piezoelektrischen Dehnungssensor, unten die Wirkleistung der linearen Vorschubachsen. Die Umrisse gleichen sich verblüffend - und gerade die Abweichungen sind das Interessante.",
+  "status": "Schritt 1 von 3",
+  "thumbnail": "img/zerspanung-kraft-leistung.svg",
+  "media": [
+    {
+      "type": "image",
+      "label": "01 · Kraft- und Leistungsschrieb im Vergleich",
+      "src": "img/zerspanung-kraft-leistung.svg",
+      "alt": "Zwei untereinander liegende Messschriebe über derselben Zeitachse: oben die Zerspankraft in Newton mit dichter hochfrequenter Schwankung, unten die Wirkleistung in Watt mit Leerlaufsockel, glattem Verlauf und einer markierten aufklingenden Störung gegen Ende.",
+      "caption": "Schritt 1: Vergleich der mit einem piezoelektrischen Dehnungssensor gemessenen Kräfte (oberes Diagramm) und der in den linearen Vorschubachsen gemessenen Leistung (unteres Diagramm). Nachbau mit synthetischen Daten, Verlauf nach einem Anwendungsbericht zur Maschinenüberwachung beim Hartdrehen.",
+      "methods": {
+        "readout": {
+          "x": {
+            "label": "Zeit",
+            "unit": "s",
+            "from": 0.087755,
+            "to": 0.97551,
+            "min": 0,
+            "max": 60,
+            "decimals": 1,
+            "step": 0.5
+          },
+          "guide": {
+            "top": 0.090323,
+            "bottom": 0.935484
+          }
+        }
+      }
+    }
+  ],
+  "timestampMode": false,
+  "legend": [
+    {
+      "color": "#4d8df6",
+      "label": "Zerspankraft F / N",
+      "hint": "Piezoelektrischer Dehnungssensor, nah am Werkzeug im Kraftfluss - hohe Bandbreite.",
+      "colorName": "oben"
+    },
+    {
+      "color": "#7fb1ff",
+      "label": "Wirkleistung P / W",
+      "hint": "Aus den Antriebsdaten der linearen Vorschubachsen - kein Sensor im Arbeitsraum nötig.",
+      "colorName": "unten"
+    },
+    {
+      "color": "#2fa6c9",
+      "label": "Markierter Bereich",
+      "hint": "Auffälligkeit, die nur in einem der beiden Signale auftaucht.",
+      "colorName": "Rahmen"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Zerspankraft",
+      "definition": "Die Kraft, die zwischen Schneide und Werkstück wirkt, während Material abgetrennt wird."
+    },
+    {
+      "term": "Schnittgeschwindigkeit v_c",
+      "definition": "Geschwindigkeit, mit der die Schneide relativ zum Werkstück durch das Material läuft."
+    },
+    {
+      "term": "Wirkleistung",
+      "definition": "Der Anteil der elektrischen Leistung, der tatsächlich in mechanische Arbeit umgesetzt wird - im Gegensatz zur Blindleistung."
+    },
+    {
+      "term": "Leerlaufleistung",
+      "definition": "Leistung, die eine Maschine im Betrieb aufnimmt, ohne dass zerspant wird (Reibung, Antriebe, Nebenaggregate)."
+    },
+    {
+      "term": "Zahneingriffsfrequenz",
+      "definition": "Wie oft pro Sekunde eine Schneide ins Material eintritt - Drehzahl mal Zähnezahl."
+    },
+    {
+      "term": "Bandbreite einer Messkette",
+      "definition": "Bis zu welcher Frequenz eine Messkette Änderungen noch korrekt abbildet. Darüber wird geglättet."
+    },
+    {
+      "term": "Piezoelektrischer Sensor",
+      "definition": "Sensor, der mechanische Verformung direkt in eine elektrische Ladung wandelt - sehr schnell und sehr steif."
+    },
+    {
+      "term": "Prozesssignal vs. Maschinensignal",
+      "definition": "Prozesssignale entstehen an der Schneide, Maschinensignale im Antriebsstrang oder der Struktur. Nur die ersten sagen etwas über die Bearbeitung aus."
+    }
+  ],
+  "guidance": {
+    "title": "So liest du zwei Messschriebe im Vergleich",
+    "steps": [
+      "Achsen zuerst: Was steht auf x und y, welche Einheiten, welcher Zeitbereich?",
+      "Umriss vergleichen: Welche Ereignisse treten in BEIDEN Kurven zur selben Zeit auf? Lies die Zeiten im Diagramm ab und übernimm sie in deinen Text.",
+      "Nulllage prüfen: Geht die Kurve wirklich auf null zurück - oder nur auf einen Sockel?",
+      "Feinstruktur prüfen: Welche Kurve zeigt schnelle Schwankungen, welche nicht?",
+      "Nach dem Einzelgänger suchen: Was steht nur in EINEM der beiden Diagramme? Markiere die Spanne und benenne sie."
+    ]
+  },
+  "task": "Schritt 1: Vergleiche die mit einem piezoelektrischen Dehnungssensor gemessenen Kräfte (oberes Diagramm) mit der in den linearen Vorschubachsen gemessenen Leistung (unteres Diagramm). Beschreibe in eigenen Worten, warum der Leistungsverlauf genau so aussieht wie der Kraftverlauf - und an welchen Stellen er es gerade NICHT tut. Belege jede Aussage mit dem Zeitpunkt: fahre mit dem Zeiger über das Diagramm, ziehe für eine Zeitspanne und übernimm den Wert mit einem Klick in deinen Text. Klick danach auf „KI Feedback“.",
+  "scaffold": [
+    {
+      "step": "Sehen",
+      "text": "Welche Ereignisse zeigen beide Kurven zur selben Zeit? Nenne die Zeitpunkte in Sekunden."
+    },
+    {
+      "step": "Benennen",
+      "text": "Wie heißen die Größen fachlich - und in welchen Einheiten werden sie gemessen?"
+    },
+    {
+      "step": "Verknüpfen",
+      "text": "Über welche physikalische Größe hängen Kraft und Leistung zusammen? Was muss dafür konstant sein?"
+    },
+    {
+      "step": "Unterscheiden",
+      "text": "Drei Unterschiede: Nulllage, Glattheit, und eine Auffälligkeit, die nur unten steht. Was folgt daraus für die Prozessüberwachung?"
+    }
+  ],
+  "feedbackCategories": [
+    {
+      "key": "beobachtung",
+      "label": "Beobachtung (Zahl, Einheit, Zeit)",
+      "color": "#3a63d8"
+    },
+    {
+      "key": "fachsprache",
+      "label": "Fachsprache",
+      "color": "#d98018"
+    },
+    {
+      "key": "physik",
+      "label": "Physikalischer Zusammenhang",
+      "color": "#1aa56a"
+    },
+    {
+      "key": "messgrenzen",
+      "label": "Grenzen der Messung",
+      "color": "#9a5bd4"
+    }
+  ],
+  "targetConcepts": [
+    "Zerspankraft",
+    "Schnittgeschwindigkeit",
+    "Schnittleistung",
+    "Wirkleistung",
+    "Leerlaufleistung",
+    "Offset",
+    "Proportionalität",
+    "Zahneingriffsfrequenz",
+    "Bandbreite",
+    "Tiefpassverhalten",
+    "Massenträgheit des Antriebsstrangs",
+    "piezoelektrischer Dehnungssensor",
+    "Werkzeugverschleiß",
+    "maschinenbedingte Störung",
+    "Prozessüberwachung",
+    "Wirkungsgrad"
+  ],
+  "mediaDescription": "Zwei Messschriebe liegen untereinander über derselben Zeitachse (0-60 s). Beide stammen aus demselben Bearbeitungsvorgang an einer CNC-Werkzeugmaschine.\n\nOBERES DIAGRAMM - Zerspankraft F in Newton, gemessen mit einem piezoelektrischen Dehnungssensor nahe am Werkzeug bzw. im Kraftfluss der Werkzeugaufnahme. Verlauf:\n- 0-6 s: Werte nahe null, nur minimales Rauschen. Das Werkzeug ist in Luft, es greift kein Zahn.\n- 6 s: steiler Anstieg innerhalb von weniger als einer Sekunde (Anschnitt).\n- 6-20,5 s: Plateau auf hohem Niveau, überlagert von einer sehr dichten, hochfrequenten Schwankung. Das Band der Schwankung ist breit; Spitzen und Täler wechseln viele Male pro Sekunde. Diese Schwankung entsteht durch den periodischen Ein- und Austritt der einzelnen Schneiden.\n- 20,5-23 s: Einbruch auf nahezu null (Rückzug / Luftschnitt zwischen zwei Schnitten).\n- 23-36 s: zweiter Schnitt, gleiches Bild.\n- 36-38,5 s: zweiter Einbruch auf nahezu null.\n- 38,5-55 s: dritter Schnitt. Das mittlere Niveau liegt minimal höher als im ersten Schnitt (leichter Anstieg über die gesamte Bearbeitung hinweg).\n- ab 55 s: zurück auf null.\n\nUNTERES DIAGRAMM - Wirkleistung P in Watt, gemessen in den linearen Vorschubachsen der Maschine (also aus den Antriebsdaten der Steuerung, ohne zusätzlichen Sensor im Arbeitsraum). Verlauf:\n- 0-6 s: die Kurve liegt NICHT bei null, sondern auf einem deutlich von null abgehobenen Sockel. Die Achsen verbrauchen auch ohne Schnitt Leistung.\n- 6 s: Anstieg zeitgleich mit der Kraft, aber sichtbar weicher/verrundet statt schlagartig.\n- 6-20,5 s: Plateau. Die Kurve ist GLATT - die dichte hochfrequente Schwankung des oberen Diagramms fehlt hier vollständig.\n- 20,5-23 s und 36-38,5 s: Einbrüche an denselben Zeitpunkten wie oben, aber nur zurück auf den Sockel, nicht auf null.\n- ab etwa 43 s: dem Plateau überlagert sich eine langsame, regelmäßige Schwingung mit einigen wenigen Hertz, deren Amplitude bis zum Ende immer größer wird. Dieser Bereich ist im Diagramm umrandet und mit \"maschinenbedingte Störung\" beschriftet. Im oberen Kraftdiagramm ist an derselben Stelle NICHTS Auffälliges zu sehen.\n\nBeide Kurven haben also denselben groben Umriss (dieselben drei Schnittabschnitte, dieselben zwei Einbrüche, dieselben Zeitpunkte), unterscheiden sich aber in Nulllage, Glattheit, Flankensteilheit und darin, dass eine Störung nur in der Leistung auftaucht.",
+  "feedbackPrompt": "ROLLE\nDu bist Tutor:in in einem Labor für Prozessdiagnostik an der Werkzeugmaschine. Du begleitest Studierende, die lernen, Messschriebe zu lesen und zu deuten. Du unterrichtest SOKRATISCH: Du stellst Fragen, die zum nächsten Denkschritt führen. Du lieferst niemals die Antwort selbst.\n\nAUFGABE\nDu bekommst (a) eine Beschreibung der beiden Diagramme, (b) eine interne Musterlösung und (c) den Text einer/eines Studierenden. Du kommentierst AUSSCHLIESSLICH den Studierenden-Text und gibst 2 bis 4 Marker zurück.\n\nWAS EIN GUTER MARKER IST\nEin Marker greift genau eine Stelle im Studierenden-Text auf, an der ein Denkschritt fehlt, zu unscharf ist oder fachlich nicht trägt. Die stärksten Marker sind:\n- Eine Beobachtung ohne Zahl, Einheit oder Zeitangabe (\"die Kraft ist hoch\" -> wie hoch, ab wann?).\n- Ein Alltagswort an einer Stelle, an der es einen Fachbegriff gibt (\"zittert\" -> welcher Begriff?).\n- Eine behauptete Ähnlichkeit ohne genannte Ursache (\"sieht gleich aus\" -> warum eigentlich?).\n- Ein übersehener Unterschied: der Sockel der Leistungskurve, die fehlende Hochfrequenz, die Störung nur im unteren Diagramm.\n- Ein Kurzschluss: \"Leistung ist gleich Kraft\" statt eines Zusammenhangs über die Geschwindigkeit.\n\nHARTE REGELN\n1. quote MUSS ein wörtliches, zusammenhängendes Stück aus dem Studierenden-Text sein - exakt so, Zeichen für Zeichen, wie es dort steht. Erfinde, kürze, glätte oder korrigiere nichts. Ist nichts wörtlich zitierbar, gib weniger Marker zurück.\n2. Nenne niemals die Lösung. Verboten sind insbesondere: die Formel selbst ausschreiben, das Wort für den gesuchten Fachbegriff nennen, die Ursache der Störung benennen. Frage danach, statt es zu sagen.\n3. question ist EINE Frage, höchstens zwei Sätze, direkt an die/den Studierenden gerichtet, per Du.\n4. nudge ist ein kurzer Hinweis, wohin zu schauen ist (ein Ort im Diagramm, ein Zeitfenster, ein Vergleich) - ohne das Ergebnis vorwegzunehmen.\n5. Ordne jeden Marker genau einer der vorgegebenen Kategorien zu.\n6. Lieber zwei scharfe Marker als vier beliebige. Ist der Text bereits präzise, gib nur einen Marker oder gar keinen zurück - erfinde keine Kritik.\n7. Antworte auf Deutsch. Bleibe sachlich und freundlich, ohne Lob-Floskeln.\n\nBEISPIEL (nur als Muster für Ton und Zuschnitt, nicht inhaltlich übernehmen)\nStudierenden-Satz: \"Unten ist die Kurve viel ruhiger.\"\nGuter Marker: question \"Was genau ist unten verschwunden - und was in der Messkette könnte es auf dem Weg verloren haben?\", nudge \"Vergleiche, wie schnell sich die beiden Kurven jeweils ändern können.\"\nSchlechter Marker (so NICHT): \"Richtig, der Antriebsstrang wirkt als Tiefpass und filtert die Zahneingriffsfrequenz heraus.\" - das ist die Lösung, keine Frage.",
+  "modelSolution": "Beide Kurven zeigen denselben Vorgang, aber an zwei verschiedenen Stellen der Wirkungskette - deshalb der gleiche Umriss und die aufschlussreichen Unterschiede.\n\nWARUM SIE SICH ÄHNELN\nDie Schnittleistung ist das Produkt aus Schnittkraft und Schnittgeschwindigkeit: P_c = F_c · v_c. Solange die Schnittgeschwindigkeit konstant gefahren wird, ist die Leistung der Kraft proportional. Jede Änderung der Kraft - Anschnitt, Plateau, Rückzug - muss sich deshalb zeitgleich in der Leistung abbilden. Genau das sieht man: dieselben drei Schnittabschnitte, dieselben zwei Einbrüche, dieselben Zeitpunkte.\n\nWARUM SIE SICH TROTZDEM UNTERSCHEIDEN\n1. Nulllage: Die Kraftkurve geht im Luftschnitt auf null, die Leistungskurve nur auf einen Sockel. Die Antriebe verbrauchen Leerlaufleistung (Reibung in Führungen und Lagern, Vorschubantriebe, Verluste). Der Zusammenhang ist also nicht rein proportional, sondern hat einen Offset: P ≈ P_leerlauf + F · v / η. Will man aus der Leistung auf die Kraft schließen, muss dieser Sockel zuerst abgezogen werden.\n2. Bandbreite: Der Piezosensor sitzt direkt im Kraftfluss und löst einzelne Schneideneingriffe auf - daher das dichte hochfrequente Band im oberen Diagramm (Zahneingriffsfrequenz = Drehzahl mal Zähnezahl). Die Leistung wird dagegen aus den Antriebsdaten gewonnen. Massenträgheit des Antriebsstrangs, Steifigkeit, Regelkreis und Abtastrate der Steuerung wirken zusammen wie ein Tiefpass: schnelle Anteile werden geglättet. Deshalb ist die untere Kurve glatt und ihre Flanken sind verrundet. Was im oberen Diagramm an Information steckt - Schneidenbruch, Rattern, einzelner Ausreißer - ist unten bereits weggefiltert.\n3. Störung nur unten: Die aufklingende Schwingung ab etwa 43 s taucht ausschließlich in der Leistung auf. Sie entsteht nicht am Werkzeug, sondern in der Maschine selbst (Antrieb, Führung, Regelschwingung). Der Piezosensor misst an der Schnittstelle Werkzeug/Werkstück und sieht sie deshalb nicht. Umgekehrt heißt das: Nicht jedes Signal in der Antriebsleistung ist ein Prozesssignal. Wer Leistung zur Prozessüberwachung nutzt, muss maschinenbedingte von prozessbedingten Anteilen trennen - sonst löst eine alternde Führung einen Werkzeugbruch-Alarm aus.\n4. Leichter Anstieg über die Bearbeitung: Das Kraftniveau steigt von Schnitt zu Schnitt minimal an - typisch für zunehmenden Werkzeugverschleiß, der die Schnittkraft erhöht.\n\nWAS MAN DARAUS FÜR DIE PRAXIS ZIEHT\nDie Antriebsleistung ist ohne Zusatzaufwand verfügbar: kein Sensor im Arbeitsraum, keine Kabel, keine Kühlmittelprobleme, aber träge, mit Offset und anfällig für maschinenbedingte Anteile. Sie taugt für grobe Zustandsüberwachung. Die piezoelektrische Kraftmessung kostet Einbauaufwand, liefert dafür ein schnelles, direktes und maschinenunabhängiges Prozesssignal und erkennt Ereignisse, die in der Leistung gar nicht ankommen.",
+  "demo": {
+    "studentText": "Oben ist die Kraft und unten die Leistung. Beide springen bei [6,0 s] nach oben und brechen bei [20,5 s] und [36,0 s] kurz ein. Die Kurven sehen fast gleich aus. Unten ist es aber viel ruhiger, und von [43,0–54,5 s] wackelt es komisch.",
+    "feedback": {
+      "markers": []
+    }
+  }
+}

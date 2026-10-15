@@ -14,6 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Fremde Seiten duerfen im Namen angemeldeter Studierender nichts ausloesen
+// (jeder Aufruf kostet Rechenzeit auf dem NHR-Cluster).
+csrf_require();
+
 // Missbrauchsschutz: Feedback nur mit (reibungsloser) Identität — so kann pro
 // Nutzer gedrosselt werden statt pro IP (Seminarraum = geteilte IP!).
 $u = current_user();
