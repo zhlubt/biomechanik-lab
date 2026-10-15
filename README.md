@@ -173,6 +173,23 @@ nicht im Repository liegt. Ein Fork braucht hier seine eigenen Werte.
 - Video-Upload mit Bewegungsanalyse. Hierher gehört das WurfTool
   (`mockups/v3_wurfvideo/`), eine eigene Pipeline mit Kennzahl-Extraktion.
 
+## Eigene Kopie anlegen
+
+Dieses Repository ist privat, und die Organisation erlaubt keine Forks privater
+Repositories. Eine eigene Kopie entsteht deshalb so:
+
+```bash
+git clone https://github.com/zhlubt/biomechanik-lab.git
+cd biomechanik-lab
+git remote rename origin upstream          # Quelle zum Nachziehen behalten
+git remote add origin <eigenes-leeres-repo> # eigenes Ziel
+git push -u origin main
+```
+
+`upstream` bleibt als Quelle erhalten, `git fetch upstream` holt spätere
+Änderungen. Rückflüsse in die andere Richtung gehen per Pull Request aus
+einem Branch dieses Repositorys oder per `git format-patch`.
+
 ## Lizenz
 
 Der Programmcode steht unter der MIT-Lizenz ([LICENSE](LICENSE)), die
