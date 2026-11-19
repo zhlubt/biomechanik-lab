@@ -96,6 +96,17 @@ $prov = llm_provenance();
       kein kommerzieller Anbieter. Übertragen wird nur der Text Ihrer Beschreibung, nicht Ihr Name.
     </p>
 
+    <h3 id="youtube">Eingebettete YouTube-Videos</h3>
+    <p>
+      Einige Übungen zeigen einen Ausschnitt aus einem YouTube-Video. Solche Videos werden erst geladen,
+      wenn Sie auf „Video laden“ klicken. Vorher besteht keine Verbindung zu YouTube. Nach dem Klick lädt Ihr
+      Browser den Player von YouTube (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland);
+      dabei werden technisch notwendige Daten wie Ihre IP-Adresse an YouTube übertragen, gegebenenfalls auch in
+      die USA. Eingebettet wird im erweiterten Datenschutzmodus (youtube-nocookie.com). Ihr Text, Ihr Name und Ihre
+      Abgaben werden nicht an YouTube übertragen. Näheres steht in der
+      <a href="https://policies.google.com/privacy?hl=de" target="_blank" rel="noopener">Datenschutzerklärung von Google</a>.
+    </p>
+
     <h3>Speicherdauer und Ihre Rechte</h3>
     <p>
       Ihre Daten bleiben gespeichert, bis Sie sie löschen oder die Lehrveranstaltung abgeschlossen ist.

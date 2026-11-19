@@ -67,6 +67,92 @@
     return self;
   }
 
+  /* ---------- YouTube-Transport (nur ein festgelegter Ausschnitt) ----------
+     Zeiten nach aussen sind relativ zum Ausschnitt: 0 = Start des Ausschnitts.
+     Die YouTube-Bedienleiste ist aus; Zeitleiste, Sprungmarken und Zeitstempel
+     laufen ueber die eigene Steuerung, die den Ausschnitt nicht verlassen kann.
+     Geladen wird erst nach Klick auf "Video laden" (Datenschutz). */
+  function makeYoutubeTransport() {
+    var Y = MEDIA.youtube || {}, S = +Y.start || 0, E = (Y.end == null) ? null : +Y.end;
+    var player = null, ready = false, rate = 1, pendingT = 0, wantPlay = false, poll = null;
+    var wrap = document.getElementById("ytWrap"), consent = document.getElementById("ytConsent"), host = document.getElementById("ytPlayer");
+
+    function absEnd() { if (E != null) return E; var d = ready ? player.getDuration() : 0; return d > S ? d : S; } // ohne Endzeit: Laenge erst nach dem Laden bekannt
+    function abs() { return ready ? (player.getCurrentTime() || 0) : S + pendingT; }
+    var self = {
+      getTime: function () { return clamp(abs() - S, 0, absEnd() - S); },
+      getDuration: function () { return absEnd() - S; },
+      getFps: function () { return FPS; },
+      isPlaying: function () { return ready && player.getPlayerState() === 1; },
+      play: function () {
+        if (!ready) { wantPlay = true; load(); return; }
+        if (abs() >= absEnd() - 0.1) player.seekTo(S, true); // am Ende: von vorn
+        player.playVideo();
+      },
+      pause: function () { wantPlay = false; if (ready) player.pauseVideo(); updateUI(self); },
+      toggle: function () { self.isPlaying() ? self.pause() : self.play(); },
+      setTime: function (t) {
+        t = clamp(t, 0, self.getDuration());
+        if (!ready) { pendingT = t; updateUI(self); return; }
+        player.seekTo(S + t, true); updateUI(self);
+      },
+      step: function (dir) { self.pause(); self.setTime(self.getTime() + dir / FPS); },
+      nudge: function (sec) { self.pause(); self.setTime(self.getTime() + sec); },
+      setRate: function (r) { rate = r; if (ready) player.setPlaybackRate(r); },
+    };
+
+    // Waechter: haelt die Wiedergabe im Ausschnitt.
+    function guard() {
+      if (!ready) return;
+      var t = player.getCurrentTime() || 0;
+      if (t < S - 0.25) player.seekTo(S, true);
+      else if (t >= absEnd() - 0.05 && player.getPlayerState() === 1) { player.pauseVideo(); player.seekTo(absEnd() - 0.05, true); }
+      updateUI(self);
+    }
+
+    var loading = false;
+    function load() {
+      if (loading || !host) return; loading = true;
+      if (consent) consent.querySelector("button").textContent = "Video wird geladen …";
+      function create() {
+        host.hidden = false;
+        var params = { start: Math.floor(S), controls: 0, disablekb: 1, rel: 0, playsinline: 1, iv_load_policy: 3, fs: 0, enablejsapi: 1, origin: location.origin };
+        if (E != null) params.end = Math.ceil(E);
+        player = new YT.Player(host, {
+          host: "https://www.youtube-nocookie.com",
+          videoId: Y.id, width: "100%", height: "100%", playerVars: params,
+          events: {
+            onReady: function () {
+              ready = true; if (consent) consent.hidden = true;
+              var f = player.getIframe(); if (f) f.title = host.dataset.title || "Video zur Übung";
+              player.setPlaybackRate(rate);
+              player.seekTo(S + pendingT, true);
+              if (wantPlay) player.playVideo(); else player.pauseVideo();
+              poll = setInterval(guard, 100);
+              updateUI(self);
+            },
+            onStateChange: function (e) {
+              // Natuerliches Ende (Ausschnitt ohne Endzeit): zurueck an den Start statt Vorschlagsliste.
+              if (e.data === 0) { player.seekTo(S, true); player.pauseVideo(); }
+              updateUI(self);
+            },
+            onError: function () { if (consent) { consent.hidden = false; consent.querySelector("button").textContent = "Video nicht verfügbar"; } }
+          }
+        });
+      }
+      if (window.YT && window.YT.Player) { create(); return; }
+      var prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function () { if (prev) prev(); create(); };
+      var sc = document.createElement("script"); sc.src = "https://www.youtube.com/iframe_api"; sc.async = true;
+      sc.onerror = function () { loading = false; if (consent) consent.querySelector("button").textContent = "Laden fehlgeschlagen, erneut versuchen"; };
+      document.head.appendChild(sc);
+    }
+    var btn = document.getElementById("ytLoad");
+    if (btn) btn.addEventListener("click", function () { load(); });
+    if (wrap && consent) wrap.addEventListener("click", function (e) { if (!ready && e.target === consent) load(); });
+    return self;
+  }
+
   /* ---------- JumpForce-Transport (SVG-Animation) ---------- */
   function makeJumpTransport() {
     var t = 0, playing = false, rate = 1, lastTs = null;
@@ -230,6 +316,7 @@
   }
 
   var transport = (MEDIA.kind === "video") ? makeVideoTransport()
+    : (MEDIA.kind === "youtube") ? makeYoutubeTransport()
     : (MEDIA.kind === "model3d" || MEDIA.kind === "image" || MEDIA.kind === "frame") ? makeNullTransport()
     : makeJumpTransport();
   updateUI(transport);
@@ -615,6 +702,136 @@
       }
     });
   }
+
+  /* ---------------------------------------------------------
+     Bild-Zoom: Vollbild-Ansicht fuer detailreiche Abbildungen.
+     Unabhaengig vom Ablese-Werkzeug (readout), das auf dem Bild selbst liegt.
+  --------------------------------------------------------- */
+  (function imageZoom() {
+    var btn = document.getElementById("imgZoomBtn");
+    var host = document.getElementById("mediaHost");
+    var srcImg = host && host.querySelector("img");
+    if (!btn || !srcImg) return;
+
+    var box = null, stage, img, pct, s = 1, tx = 0, ty = 0, fitS = 1, maxS = 4;
+    var pts = {}, last = null, pinch = null, lastFocus = null;
+
+    function apply() {
+      img.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + s + ")";
+      pct.textContent = Math.round(s / fitS * 100) + " %";
+    }
+    function clampPan() {
+      var vw = stage.clientWidth, vh = stage.clientHeight, w = img.naturalWidth * s, h = img.naturalHeight * s;
+      // Kleiner als die Buehne: zentrieren; groesser: Raender nicht ins Leere ziehen lassen.
+      tx = w <= vw ? (vw - w) / 2 : Math.min(0, Math.max(vw - w, tx));
+      ty = h <= vh ? (vh - h) / 2 : Math.min(0, Math.max(vh - h, ty));
+    }
+    function zoomAt(ns, cx, cy) {
+      ns = Math.max(fitS, Math.min(maxS, ns));
+      tx = cx - (cx - tx) * (ns / s); ty = cy - (cy - ty) * (ns / s); s = ns;
+      clampPan(); apply();
+    }
+    function fit() {
+      var vw = stage.clientWidth, vh = stage.clientHeight;
+      fitS = Math.min(vw / img.naturalWidth, vh / img.naturalHeight, 1);
+      maxS = Math.max(fitS * 8, 3);
+      s = fitS; clampPan(); apply();
+    }
+    function center() { return { x: stage.clientWidth / 2, y: stage.clientHeight / 2 }; }
+    function local(e) { var r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+
+    function build() {
+      box = document.createElement("div");
+      box.className = "img-zoom"; box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true");
+      box.setAttribute("aria-label", "Bild vergrößert");
+      box.innerHTML =
+        '<div class="img-zoom-bar">' +
+          '<button type="button" class="ctrl" data-z="out" aria-label="Verkleinern">−</button>' +
+          '<span class="img-zoom-pct">100 %</span>' +
+          '<button type="button" class="ctrl" data-z="in" aria-label="Vergrößern">+</button>' +
+          '<button type="button" class="ctrl" data-z="fit">Ganzes Bild</button>' +
+          '<span class="img-zoom-hint">Mausrad / Pinch / Doppelklick zoomt · ziehen verschiebt · Esc schließt</span>' +
+          '<button type="button" class="ctrl" data-z="close">Schließen</button>' +
+        '</div><div class="img-zoom-stage"><img alt=""></div>';
+      document.body.appendChild(box);
+      stage = box.querySelector(".img-zoom-stage"); img = stage.querySelector("img"); pct = box.querySelector(".img-zoom-pct");
+      img.alt = srcImg.alt || ""; img.draggable = false;
+
+      box.querySelector(".img-zoom-bar").addEventListener("click", function (e) {
+        var b = e.target.closest("button"); if (!b) return; var c = center();
+        if (b.dataset.z === "in") zoomAt(s * 1.5, c.x, c.y);
+        if (b.dataset.z === "out") zoomAt(s / 1.5, c.x, c.y);
+        if (b.dataset.z === "fit") fit();
+        if (b.dataset.z === "close") close();
+      });
+      stage.addEventListener("wheel", function (e) {
+        e.preventDefault(); var p = local(e);
+        zoomAt(s * Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015)), p.x, p.y);
+      }, { passive: false });
+      stage.addEventListener("dblclick", function (e) {
+        var p = local(e); zoomAt(s > fitS * 1.5 ? fitS : fitS * 3, p.x, p.y);
+      });
+      stage.addEventListener("pointerdown", function (e) {
+        stage.setPointerCapture(e.pointerId); pts[e.pointerId] = local(e);
+        var ids = Object.keys(pts);
+        if (ids.length === 1) { last = pts[ids[0]]; pinch = null; }
+        if (ids.length === 2) {
+          var a = pts[ids[0]], b = pts[ids[1]];
+          pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, s: s };
+        }
+      });
+      stage.addEventListener("pointermove", function (e) {
+        if (!pts[e.pointerId]) return;
+        pts[e.pointerId] = local(e);
+        var ids = Object.keys(pts);
+        if (ids.length >= 2 && pinch) {
+          var a = pts[ids[0]], b = pts[ids[1]];
+          zoomAt(pinch.s * (Math.hypot(a.x - b.x, a.y - b.y) / pinch.d), (a.x + b.x) / 2, (a.y + b.y) / 2);
+        } else if (ids.length === 1 && last) {
+          var p = pts[ids[0]]; tx += p.x - last.x; ty += p.y - last.y; last = p; clampPan(); apply();
+        }
+      });
+      function up(e) {
+        delete pts[e.pointerId];
+        var ids = Object.keys(pts); pinch = null; last = ids.length === 1 ? pts[ids[0]] : null;
+      }
+      stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
+      // Auf document (Capture), weil der Fokus nach einem Klick ins Bild nicht mehr im Dialog liegt.
+      document.addEventListener("keydown", function (e) {
+        if (box.hidden) return;
+        e.stopPropagation();
+        var c = center(), step = 60;
+        if (e.key === "Escape") close();
+        else if (e.key === "+" || e.key === "=") zoomAt(s * 1.5, c.x, c.y);
+        else if (e.key === "-") zoomAt(s / 1.5, c.x, c.y);
+        else if (e.key === "0") fit();
+        else if (e.key.indexOf("Arrow") === 0) {
+          e.preventDefault();
+          if (e.key === "ArrowLeft") tx += step; if (e.key === "ArrowRight") tx -= step;
+          if (e.key === "ArrowUp") ty += step; if (e.key === "ArrowDown") ty -= step;
+          clampPan(); apply();
+        }
+      }, true);
+      addEventListener("resize", function () { if (box && !box.hidden) fit(); });
+    }
+    function open() {
+      if (!box) build();
+      lastFocus = document.activeElement;
+      box.hidden = false; document.documentElement.classList.add("img-zoom-open");
+      function ready() { fit(); box.querySelector('[data-z="close"]').focus(); }
+      if (!img.getAttribute("src")) { img.onload = ready; img.src = srcImg.currentSrc || srcImg.src; }
+      else ready();
+    }
+    function close() {
+      if (!box) return;
+      box.hidden = true; pts = {}; last = null; pinch = null;
+      document.documentElement.classList.remove("img-zoom-open");
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    btn.addEventListener("click", open);
+    // Ohne Ablese-Werkzeug ist das Bild selbst frei: ein Klick darauf oeffnet die Vergroesserung.
+    if (!MEDIA.methods) { srcImg.style.cursor = "zoom-in"; srcImg.addEventListener("click", open); }
+  })();
 
   setTimeout(startTyping, 700);
 })();

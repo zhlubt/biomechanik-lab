@@ -14,6 +14,7 @@ declare(strict_types=1);
 function exercise_media_kinds(): array {
     return [
         'video'     => 'Video',
+        'youtube'   => 'YouTube-Video (Ausschnitt)',
         'image'     => 'Bild / Diagramm',
         'model3d'   => '3D-Modell',
         'frame'     => 'Animation',
@@ -79,6 +80,50 @@ function ex_media_path(string $kind, $v): string {
     return preg_match($re, $s) ? $s : '';
 }
 
+/**
+ * YouTube-Video-ID aus einer ID oder einer URL lesen (watch?v=, youtu.be/,
+ * embed/, shorts/, live/). Andere Hosts werden abgelehnt. '' = ungültig.
+ */
+function ex_youtube_id($v): string {
+    $v = trim((string)$v);
+    if (preg_match('~^[A-Za-z0-9_-]{11}$~', $v)) return $v;
+    if (!preg_match('~^https?://~i', $v)) $v = 'https://' . $v;
+    $u = parse_url($v);
+    if (!is_array($u) || empty($u['host'])) return '';
+    $host = strtolower(preg_replace('~^(www\.|m\.)~', '', $u['host']));
+    $path = (string)($u['path'] ?? '');
+    $id = '';
+    if ($host === 'youtu.be') {
+        $id = explode('/', ltrim($path, '/'))[0] ?? '';
+    } elseif (in_array($host, ['youtube.com', 'youtube-nocookie.com', 'music.youtube.com'], true)) {
+        parse_str((string)($u['query'] ?? ''), $q);
+        if ($path === '/watch' && isset($q['v'])) $id = (string)$q['v'];
+        elseif (preg_match('~^/(embed|shorts|live|v)/([^/?#]+)~', $path, $mm)) $id = $mm[2];
+    }
+    return preg_match('~^[A-Za-z0-9_-]{11}$~', $id) ? $id : '';
+}
+
+/** Startzeit aus dem t=-Parameter einer YouTube-URL (z. B. t=95, t=1m35s). */
+function ex_youtube_url_start($v): ?float {
+    $q = (string)(parse_url(trim((string)$v), PHP_URL_QUERY) ?? '');
+    parse_str($q, $qq);
+    return isset($qq['t']) ? ex_time($qq['t']) : (isset($qq['start']) ? ex_time($qq['start']) : null);
+}
+
+/** Zeitangabe in Sekunden: 20 · 20.5 · "0:20" · "1:02:03" · "1m20s" · "20,5". null = leer/ungültig. */
+function ex_time($v): ?float {
+    if (is_int($v) || is_float($v)) return $v >= 0 ? (float)$v : null;
+    $v = str_replace(',', '.', trim((string)$v));
+    if ($v === '') return null;
+    if (preg_match('~^\d+(\.\d+)?$~', $v)) return (float)$v;
+    if (preg_match('~^(\d+):([0-5]?\d(?:\.\d+)?)$~', $v, $m)) return $m[1] * 60 + (float)$m[2];
+    if (preg_match('~^(\d+):([0-5]?\d):([0-5]?\d(?:\.\d+)?)$~', $v, $m)) return $m[1] * 3600 + $m[2] * 60 + (float)$m[3];
+    if (preg_match('~^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?$~i', $v, $m) && $v !== '') {
+        return (int)($m[1] ?? 0) * 3600 + (int)($m[2] ?? 0) * 60 + (float)($m[3] ?? 0);
+    }
+    return null;
+}
+
 function ex_phases($v): array {
     $out = [];
     foreach (ex_list($v) as $p) {
@@ -126,10 +171,10 @@ function ex_media(array $in, string $publicDir): array {
             if (!is_array($cand)) continue;
             $t = (string)($cand['type'] ?? '');
             if ($t === 'interactive' && ($cand['component'] ?? '') === 'JumpForceLab') { $m = $cand + ['kind' => 'jumpforce']; break; }
-            if (in_array($t, ['video', 'image', 'model3d', 'frame'], true)) { $m = $cand + ['kind' => $t]; break; }
+            if (in_array($t, ['video', 'youtube', 'image', 'model3d', 'frame'], true)) { $m = $cand + ['kind' => $t]; break; }
         }
     }
-    if ($m === null) return [[], 'Es fehlt ein Medium (Video, Bild, 3D-Modell, Animation oder Simulation).'];
+    if ($m === null) return [[], 'Es fehlt ein Medium (Video, YouTube-Video, Bild, 3D-Modell, Animation oder Simulation).'];
 
     $kind  = (string)$m['kind'];
     $cfgIn = is_array($m['config'] ?? null) ? $m['config'] : [];
@@ -145,6 +190,27 @@ function ex_media(array $in, string $publicDir): array {
                 'durationSec' => max(0.1, (float)ex_num($cfgIn['durationSec'] ?? null, 5.0)),
                 'fps'         => (int)max(1, min(1000, (int)ex_num($cfgIn['fps'] ?? null, 30.0))),
                 'phases'      => ex_phases($cfgIn['phases'] ?? []),
+            ]];
+            break;
+        case 'youtube':
+            // Nur die Video-ID wird gespeichert; eingebettet wird ueber youtube-nocookie.com
+            // und erst nach Klick der Studierenden (Datenschutz, siehe uebung.php).
+            $url = (string)($m['url'] ?? $m['videoId'] ?? '');
+            $vid = ex_youtube_id($m['videoId'] ?? '') ?: ex_youtube_id($url);
+            if ($vid === '') return [[], 'YouTube: bitte einen gültigen YouTube-Link angeben (z. B. https://www.youtube.com/watch?v=… oder https://youtu.be/…).'];
+            $rawStart = $cfgIn['start'] ?? $m['start'] ?? null;
+            $rawEnd   = $cfgIn['end'] ?? $m['end'] ?? null;
+            $start = ex_time($rawStart);
+            $end   = ex_time($rawEnd);
+            if ($start === null && ($rawStart === null || trim((string)$rawStart) === '')) $start = ex_youtube_url_start($url) ?? 0.0;
+            if ($start === null) return [[], 'YouTube: Die Startzeit ist keine gültige Zeitangabe (z. B. 20 oder 0:20).'];
+            if ($end === null && $rawEnd !== null && trim((string)$rawEnd) !== '') return [[], 'YouTube: Die Endzeit ist keine gültige Zeitangabe (z. B. 30 oder 0:30).'];
+            if ($end !== null && $end <= $start + 0.5) return [[], 'YouTube: Das Ende des Ausschnitts muss mindestens eine halbe Sekunde nach dem Start liegen.'];
+            $out = ['type' => 'youtube'] + $base + ['videoId' => $vid, 'config' => [
+                'start'  => round($start, 2),
+                'end'    => $end === null ? null : round($end, 2),
+                'fps'    => (int)max(1, min(120, (int)ex_num($cfgIn['fps'] ?? null, 30.0))),
+                'phases' => ex_phases($cfgIn['phases'] ?? []),
             ]];
             break;
         case 'image':
@@ -210,7 +276,7 @@ function normalize_exercise(array $in, array $loc, string $publicDir): array {
     [$media, $mErr] = ex_media($in, $publicDir);
     if ($mErr) $errors[] = $mErr;
     // Zeitstempel-Knopf: bei Video ohnehin immer an, bei der Simulation wählbar.
-    $hasTimeline = in_array($media[0]['type'] ?? '', ['video'], true) || ($media[0]['component'] ?? '') === 'JumpForceLab';
+    $hasTimeline = in_array($media[0]['type'] ?? '', ['video', 'youtube'], true) || ($media[0]['component'] ?? '') === 'JumpForceLab';
 
     // Feedback-Kategorien: Schlüssel eindeutig, 1 bis 6.
     $cats = []; $seen = [];

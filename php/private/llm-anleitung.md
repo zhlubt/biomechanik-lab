@@ -84,6 +84,7 @@ Jede Übung hat genau ein Hauptmedium. Zur Wahl stehen:
 | Typ | Geeignet für | Was die Lehrperson liefern muss | Werkzeuge für Studierende |
 | --- | --- | --- | --- |
 | Video (`video`) | Bewegungsabläufe, Phasen, Zeitpunkte, Versuchsdurchführung | mp4-Datei, Bilder pro Sekunde, Dauer; optional Sprungmarken | Zeitleiste, Einzelbild-Schritte, Zeitlupe, Zeitstempel einfügen |
+| YouTube-Ausschnitt (`youtube`) | wie Video, wenn es das passende Material schon auf YouTube gibt und nur ein Teil gebraucht wird | YouTube-Link, Start und Ende des Ausschnitts; optional Sprungmarken | wie Video, aber nur der Ausschnitt ist abspielbar; lädt erst nach Klick (Datenschutz) |
 | Bild oder Diagramm (`image`) | Messschriebe, Kurven, Schemata, Mikroskopbilder | png, jpg, webp oder svg | optional Ablese-Werkzeug: Wert auf der x-Achse unter dem Zeiger ablesen und als `[43,0–54,5 s]` in den Text übernehmen |
 | 3D-Modell (`model3d`) | Anatomie, Bauteile, räumliche Lage | .glb-Datei | drehen, zoomen, Schichten (Knochen, Muskeln, Bänder, Knorpel, Gefäße, Nerven) ein- und ausblenden |
 | Animation (`frame`) | Geräte- und Laborabläufe in Arbeitsschritten | nur vorhandene Animationen: `anim/probenahme.html` (Bodenprobe mit Hydraulikpresse), `anim/ksat.html` (KSAT-Messung) | eigene Steuerung der Animation |
@@ -178,7 +179,7 @@ Dann gib die Übung in genau dieser Struktur aus. Felder, die nicht passen, läs
   "status": "Teil 1 von 2",
   "media": [
     {
-      "type": "video | image | model3d | frame | interactive",
+      "type": "video | youtube | image | model3d | frame | interactive",
       "label": "01 · Überschrift des Mediums",
       "src": "",
       "alt": "Was im Medium zu sehen ist, für Screenreader.",
@@ -206,9 +207,10 @@ Dann gib die Übung in genau dieser Struktur aus. Felder, die nicht passen, läs
 
 Hinweise zu `media`:
 
-- `type`: genau einer der fünf Werte. Für die Sprung-Simulation `"type": "interactive", "component": "JumpForceLab"`.
+- `type`: genau einer der sechs Werte. Für die Sprung-Simulation `"type": "interactive", "component": "JumpForceLab"`.
 - `src`: leer lassen, wenn die Lehrperson die Datei im Formular hochlädt. Sonst `vid/…mp4`, `img/…png`, `model/…glb` oder `anim/probenahme.html` bzw. `anim/ksat.html`.
 - `config`: bei Video `fps`, `durationSec` und optional `phases` (Sprungmarken in Sekunden). Bei 3D optional `"initialHidden": ["muskel"]` für anfangs ausgeblendete Schichten (`knochen`, `muskel`, `band`, `knorpel`, `gefaess`, `nerv`). Bei Bild und Animation weglassen.
+- Bei `youtube` statt `src`: `"url": "https://www.youtube.com/watch?v=…"` und in `config` `"start"` und `"end"` (Sekunden oder `"0:20"`; `end` weglassen = bis zum Videoende), dazu optional `fps` und `phases`. Sprungmarken zählen ab Beginn des Ausschnitts: Bei einem Ausschnitt von 0:20 bis 0:30 ist der Moment bei 0:25 im Video `"t": 5`.
 - `methods.readout`: nur bei Bildern mit Ablese-Werkzeug. `min` und `max` sind die Werte am linken und rechten Ende der x-Achse. `from`, `to`, `top` und `bottom` setzt die Lehrperson im Formular per Klick ins Bild, deshalb `null`.
 
 Sage der Lehrperson nach der Ausgabe in zwei Sätzen, was im Formular noch zu tun ist: Dateien wählen, beim Ablese-Werkzeug die vier Punkte ins Bild klicken, „Prüfen“, dann „Übung anlegen“, danach die Übung öffnen und einmal selbst mit einem schwachen Text ausprobieren.

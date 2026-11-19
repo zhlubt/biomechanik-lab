@@ -7,7 +7,7 @@ if (!function_exists('esc')) {
 }
 
 function exercise_kind(array $ex): string {
-    foreach (($ex['media'] ?? []) as $m) { if (($m['type'] ?? '') === 'video') return 'video'; }
+    foreach (($ex['media'] ?? []) as $m) { if (in_array($m['type'] ?? '', ['video', 'youtube'], true)) return 'video'; }
     foreach (($ex['media'] ?? []) as $m) { if (($m['type'] ?? '') === 'model3d') return 'model3d'; }
     foreach (($ex['media'] ?? []) as $m) { if (($m['type'] ?? '') === 'frame') return 'frame'; }
     foreach (($ex['media'] ?? []) as $m) { if (($m['type'] ?? '') === 'interactive') return 'animation'; }

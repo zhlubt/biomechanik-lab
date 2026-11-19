@@ -124,10 +124,10 @@ echo "▸ PHP-Deploy → ${U}@${HOST}:${PORT}  (Passwort verborgen)"
 
   # Schreibbar fuer den Web-User: Uploads aus „Neue Uebung“ (Bild, Video, 3D) und die Datenbank.
   echo "chmod 775 public/img public/vid public/model private/data"
-  echo "chmod 755 private/content"
-  find php/private/content -mindepth 1 -type d | sed 's|^php/private/content|chmod 755 private/content|'
+  echo "-chmod 775 private/content"
+  find php/private/content -mindepth 1 -type d | sed 's|^php/private/content|-chmod 775 private/content|'
   find php/private/content -name '*.json' | while read -r f; do
-    echo "chmod 664 private/content/${f#php/private/content/}"
+    echo "-chmod 664 private/content/${f#php/private/content/}"
   done
 } > "$BATCH"
 

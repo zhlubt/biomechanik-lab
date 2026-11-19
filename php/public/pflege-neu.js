@@ -131,6 +131,42 @@
   }
   kindsHost.addEventListener("change", showPanels);
 
+  /* ---------- YouTube: Link und Ausschnitt live pruefen (massgeblich prueft der Server) ---------- */
+  function ytId(u) {
+    u = (u || "").trim();
+    if (/^[A-Za-z0-9_-]{11}$/.test(u)) return u;
+    var m = u.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : "";
+  }
+  function parseTime(v) {
+    v = String(v == null ? "" : v).trim().replace(",", ".");
+    if (!v) return null;
+    if (/^\d+(\.\d+)?$/.test(v)) return parseFloat(v);
+    var p = v.match(/^(?:(\d+):)?(\d+):([0-5]?\d(?:\.\d+)?)$/) ;
+    if (p) return (+(p[1] || 0)) * 3600 + (+p[2]) * 60 + parseFloat(p[3]);
+    var hms = v.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?$/i);
+    if (hms && (hms[1] || hms[2] || hms[3])) return (+(hms[1] || 0)) * 3600 + (+(hms[2] || 0)) * 60 + parseFloat(hms[3] || 0);
+    return NaN;
+  }
+  function fmtTime(x) { x = +x || 0; var s = x % 60; return Math.floor(x / 60) + ":" + (s < 10 ? "0" : "") + (Math.round(s * 100) / 100); }
+  var yInfo = $("nu_yinfo"), yInfoBase = yInfo ? yInfo.innerHTML : "";
+  function ytInfo() {
+    if (!yInfo) return;
+    var url = val("n_yurl"), id = ytId(url), a = parseTime(val("n_ystart")), b = parseTime(val("n_yend")), msg = "";
+    if (a === null) { var t = url.match(/[?&](?:t|start)=([0-9hms.]+)/); if (t) { a = parseTime(t[1]); if (!val("n_ystart") && a != null && !isNaN(a)) setVal("n_ystart", fmtTime(a)); } }
+    if (url && !id) msg = "Das sieht nicht nach einem YouTube-Link aus.";
+    else if (isNaN(a)) msg = "„Ausschnitt ab“ ist keine Zeitangabe (z. B. 20 oder 0:20).";
+    else if (isNaN(b)) msg = "„Ausschnitt bis“ ist keine Zeitangabe (z. B. 30 oder 0:30).";
+    else if (b != null && b <= (a || 0) + 0.5) msg = "„Ausschnitt bis“ muss nach dem Start liegen.";
+    else if (id) {
+      var len = b != null ? (b - (a || 0)) : null;
+      msg = '<b>Ausschnitt ' + fmtTime(a || 0) + (b != null ? " bis " + fmtTime(b) + " (" + (Math.round(len * 10) / 10) + " s)" : " bis Videoende") + '</b> · ' +
+        '<a href="https://www.youtube.com/watch?v=' + id + '&t=' + Math.floor(a || 0) + 's" target="_blank" rel="noopener">auf YouTube prüfen</a>';
+    }
+    yInfo.innerHTML = (msg ? msg + "<br>" : "") + yInfoBase;
+  }
+  ["n_yurl", "n_ystart", "n_yend"].forEach(function (id) { var e = $(id); if (e) e.addEventListener("input", ytInfo); });
+
   var frameSel = $("n_frame");
   (NU.frames || []).forEach(function (f) { var o = document.createElement("option"); o.value = f; o.textContent = f; frameSel.appendChild(o); });
   if (!(NU.frames || []).length) { var o = document.createElement("option"); o.value = ""; o.textContent = "keine Animation vorhanden"; frameSel.appendChild(o); }
@@ -232,6 +268,9 @@
     if (k === "video") {
       m.type = "video"; m.src = pending("n_vfile", "vid/upload.mp4", val("n_vsrc"));
       m.config = { durationSec: num(val("n_dur")), fps: num(val("n_fps")), phases: phases };
+    } else if (k === "youtube") {
+      m.type = "youtube"; m.url = val("n_yurl");
+      m.config = { start: val("n_ystart"), end: val("n_yend"), fps: num(val("n_yfps")), phases: phases };
     } else if (k === "image") {
       m.type = "image"; m.src = pending("n_ifile", "img/upload.png", val("n_isrc"));
       if ($("n_ro").checked) {
@@ -292,6 +331,12 @@
       setVal("n_mlabel", m.label); setVal("n_malt", m.alt); setVal("n_mcaption", m.caption);
       var cfg = m.config || {};
       if (k === "video") { setVal("n_vsrc", m.src); setVal("n_fps", cfg.fps); setVal("n_dur", cfg.durationSec); }
+      if (k === "youtube") {
+        setVal("n_yurl", m.videoId ? "https://www.youtube.com/watch?v=" + m.videoId : (m.url || ""));
+        setVal("n_ystart", cfg.start != null ? fmtTime(cfg.start) : ""); setVal("n_yend", cfg.end != null ? fmtTime(cfg.end) : "");
+        if (cfg.fps) setVal("n_yfps", cfg.fps);
+        ytInfo();
+      }
       if (k === "image") {
         setVal("n_isrc", m.src);
         var ro = m.methods && m.methods.readout;
@@ -310,7 +355,7 @@
         form.querySelectorAll('input[name="hide"]').forEach(function (c) { c.checked = hid.indexOf(c.value) >= 0; });
       }
       if (k === "frame" && m.src) frameSel.value = m.src;
-      if (k === "video" || k === "jumpforce") setRows("phases", cfg.phases || []);
+      if (k === "video" || k === "youtube" || k === "jumpforce") setRows("phases", cfg.phases || []);
     }
     if (has("timestampMode")) $("n_ts").checked = !!ex.timestampMode;
     if (has("legend") || !partial) setRows("legend", ex.legend);

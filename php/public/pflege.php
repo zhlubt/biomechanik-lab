@@ -192,6 +192,16 @@ if (isset($_GET['neu'])) {
           <p class="field-hint">Videos haben immer Zeitleiste, Einzelbild-Schritte und den Knopf „Zeitstempel einfügen“. Große Dateien besser per SFTP nach <code>vid/</code> laden und den Pfad angeben.</p>
         </div>
 
+        <div class="nu-panel" data-kind="youtube">
+          <label class="field"><span class="field-label">YouTube-Link <span class="field-hint">(watch?v=…, youtu.be/…, shorts/…)</span></span><input id="n_yurl" placeholder="https://www.youtube.com/watch?v=…"></label>
+          <div class="nu-grid c3">
+            <label class="field"><span class="field-label">Ausschnitt ab <span class="field-hint">(Sekunden oder m:ss)</span></span><input id="n_ystart" placeholder="0:20"></label>
+            <label class="field"><span class="field-label">Ausschnitt bis <span class="field-hint">(leer = bis zum Ende)</span></span><input id="n_yend" placeholder="0:30"></label>
+            <label class="field"><span class="field-label">Bilder pro Sekunde <span class="field-hint">(für ±1 Bild)</span></span><input id="n_yfps" type="number" step="1" value="30"></label>
+          </div>
+          <p class="field-hint" id="nu_yinfo">Studierende sehen nur diesen Ausschnitt: Die Zeitleiste der Übung beginnt bei 0:00 am Start des Ausschnitts, die YouTube-Bedienleiste ist ausgeblendet. Sprungmarken unten in Sekunden ab Ausschnittbeginn. Geladen wird das Video erst, wenn Studierende auf „Video laden“ klicken (Datenschutz). Wer den Link kennt, kann das ganze Video natürlich weiterhin auf YouTube ansehen.</p>
+        </div>
+
         <div class="nu-panel" data-kind="image">
           <div class="nu-grid c2">
             <label class="field"><span class="field-label">Bilddatei <span class="field-hint">(png/jpg/webp)</span></span><input type="file" id="n_ifile" accept="image/png,image/jpeg,image/webp,image/gif"></label>
@@ -246,7 +256,7 @@ if (isset($_GET['neu'])) {
           <label class="nu-check"><input type="checkbox" id="n_ts"> Knopf „Zeitstempel einfügen“ anbieten</label>
         </div>
 
-        <div class="nu-panel" data-kind="video jumpforce">
+        <div class="nu-panel" data-kind="video youtube jumpforce">
           <div class="field"><span class="field-label">Sprungmarken <span class="field-hint">(Knöpfe unter der Zeitleiste)</span></span><div class="rows" data-rows="phases"></div></div>
         </div>
       </fieldset>

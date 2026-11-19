@@ -28,33 +28,35 @@ if ($ex === null) {
 }
 
 // Medien nach Typ/Komponente auflösen
-$jumpLab = null; $knee = null; $embed = null; $video = null; $model = null; $image = null; $frame = null;
+$jumpLab = null; $knee = null; $embed = null; $video = null; $youtube = null; $model = null; $image = null; $frame = null;
 foreach (($ex['media'] ?? []) as $m) {
     if (($m['type'] ?? '') === 'interactive' && ($m['component'] ?? '') === 'JumpForceLab') $jumpLab = $m;
     if (($m['type'] ?? '') === 'interactive' && ($m['component'] ?? '') === 'KneeFrontal') $knee = $m;
     if (($m['type'] ?? '') === 'embed') $embed = $m;
     if (($m['type'] ?? '') === 'video' && $video === null) $video = $m;
+    if (($m['type'] ?? '') === 'youtube' && $youtube === null && preg_match('~^[A-Za-z0-9_-]{11}$~', (string)($m['videoId'] ?? ''))) $youtube = $m;
     if (($m['type'] ?? '') === 'model3d' && $model === null) $model = $m;
     if (($m['type'] ?? '') === 'image' && $image === null) $image = $m;
     // Eigenständige Animationsseite unter public/anim/, per iframe eingebettet (bringt ihre eigene Steuerung mit).
     if (($m['type'] ?? '') === 'frame' && $frame === null && preg_match('~^anim/[a-z0-9-]+\.html$~', (string)($m['src'] ?? ''))) $frame = $m;
 }
-// Primär-Medium: Video > 3D-Modell > Animationsseite > Standbild (Diagramm/Messschrieb) > Sprung-Simulation
+// Primär-Medium: Video > YouTube > 3D-Modell > Animationsseite > Standbild (Diagramm/Messschrieb) > Sprung-Simulation
 $isVideo = $video !== null;
-$isModel = $model !== null;
-$isFrame = !$isVideo && !$isModel && $frame !== null;
-$isImage = !$isVideo && !$isModel && !$isFrame && $image !== null;
-$primary = $isVideo ? $video : ($isModel ? $model : ($isFrame ? $frame : ($isImage ? $image : $jumpLab)));
+$isYoutube = !$isVideo && $youtube !== null;
+$isModel = !$isVideo && !$isYoutube && $model !== null;
+$isFrame = !$isVideo && !$isYoutube && !$isModel && $frame !== null;
+$isImage = !$isVideo && !$isYoutube && !$isModel && !$isFrame && $image !== null;
+$primary = $isVideo ? $video : ($isYoutube ? $youtube : ($isModel ? $model : ($isFrame ? $frame : ($isImage ? $image : $jumpLab))));
 $cfg = ($primary['config'] ?? []);
 // Standbild, 3D-Modell und Animationsseite haben keine Zeitachse der Übungsseite -> weder Transport noch Zeitstempel.
 $noTransport = $isModel || $isImage || $isFrame;
-$useTimestamps = ((bool)($ex['timestampMode'] ?? false) || $isVideo) && !$noTransport;
+$useTimestamps = ((bool)($ex['timestampMode'] ?? false) || $isVideo || $isYoutube) && !$noTransport;
 
 // Client-sichere Daten (OHNE feedbackPrompt!)
 $client = [
     'locator'     => $loc,
     'media'       => [
-        'kind'        => $isVideo ? 'video' : ($isModel ? 'model3d' : ($isFrame ? 'frame' : ($isImage ? 'image' : 'jumpforce'))),
+        'kind'        => $isVideo ? 'video' : ($isYoutube ? 'youtube' : ($isModel ? 'model3d' : ($isFrame ? 'frame' : ($isImage ? 'image' : 'jumpforce')))),
         'src'         => $isVideo ? ($video['src'] ?? '') : ($isModel ? ($model['src'] ?? '') : ($isFrame ? ($frame['src'] ?? '') : ($isImage ? ($image['src'] ?? '') : null))),
         'durationSec' => $cfg['durationSec'] ?? 3.0,
         'fps'         => $cfg['fps'] ?? 30,
@@ -62,6 +64,12 @@ $client = [
         'methods'     => $primary['methods'] ?? null,
         // 3D-Betrachter: anfangs ausgeblendete Schichten (model-viewer.js liest media.config.initialHidden).
         'config'      => $isModel ? ['initialHidden' => array_values((array)($cfg['initialHidden'] ?? []))] : null,
+        // YouTube: nur dieser Ausschnitt ist abspielbar (app.js haelt die Wiedergabe darin).
+        'youtube'     => $isYoutube ? [
+            'id'    => (string)$youtube['videoId'],
+            'start' => max(0.0, (float)($cfg['start'] ?? 0)),
+            'end'   => isset($cfg['end']) && is_numeric($cfg['end']) ? (float)$cfg['end'] : null,
+        ] : null,
     ],
     'timestamps'  => $useTimestamps,
     'phases'      => $cfg['phases'] ?? [],
@@ -138,10 +146,29 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
                 <img src="<?= esc($image['src']) ?>" alt="<?= esc($image['alt'] ?? $image['label'] ?? 'Messdiagramm zur Übung') ?>"
                      style="display:block;width:100%;height:auto;background:#11151d" />
               </div>
+              <div class="img-tools">
+                <button type="button" class="ctrl" id="imgZoomBtn">Bild vergrößern</button>
+                <span class="hint">In der Vergrößerung: Mausrad, Pinch oder Doppelklick zoomt, Ziehen verschiebt.</span>
+              </div>
               <?php if (!empty($image['caption'])): ?>
               <figcaption style="margin:10px 2px 0;color:#9aa6b6;font-size:13px;line-height:1.5"><?= esc($image['caption']) ?></figcaption>
               <?php endif; ?>
             </figure>
+          <?php elseif ($isYoutube):
+            $ytStart = (float)($cfg['start'] ?? 0); $ytEnd = isset($cfg['end']) && is_numeric($cfg['end']) ? (float)$cfg['end'] : null;
+            $ytFmt = fn(float $x) => floor($x / 60) . ':' . str_pad((string)floor(fmod($x, 60)), 2, '0', STR_PAD_LEFT); ?>
+            <div class="yt-wrap" id="ytWrap">
+              <div class="yt-consent" id="ytConsent">
+                <p><b>Video von YouTube</b><?= $ytEnd !== null ? ' · Ausschnitt ' . esc($ytFmt($ytStart)) . ' bis ' . esc($ytFmt($ytEnd)) : '' ?></p>
+                <p class="yt-note">Beim Laden wird eine Verbindung zu YouTube (Google) hergestellt; dabei wird unter anderem deine IP-Adresse übertragen.
+                  Eingebettet wird im erweiterten Datenschutzmodus. <a href="impressum.php#youtube">Mehr dazu</a></p>
+                <button type="button" class="ctrl primary" id="ytLoad">Video laden</button>
+              </div>
+              <div class="yt-player" id="ytPlayer" hidden data-title="<?= esc($youtube['alt'] ?? $youtube['label'] ?? 'Video zur Übung') ?>"></div>
+            </div>
+            <?php if (!empty($youtube['caption'])): ?>
+            <p style="margin:10px 2px 0;color:var(--ink-mute);font-size:13px;line-height:1.5"><?= esc($youtube['caption']) ?></p>
+            <?php endif; ?>
           <?php elseif ($isVideo): ?>
             <video id="vid" preload="metadata" playsinline style="display:block;width:100%;max-height:520px;background:#000;object-fit:contain">
               <source src="<?= esc($video['src']) ?>" type="video/mp4" />

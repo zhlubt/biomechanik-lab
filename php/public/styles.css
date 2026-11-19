@@ -1563,3 +1563,31 @@ a.sub-title:hover { color: var(--accent); }
 .rev-hints .rev-cat { font-weight: 600; font-size: 13px; }
 .rev-hints .rev-quote { color: var(--ink-mute); font-style: italic; }
 .rev-hints .rev-nudge { margin-top: 4px; font-size: 13px; color: var(--ink-mute); }
+
+/* Bild-Zoom (Vollbild-Ansicht fuer detailreiche Abbildungen) */
+.img-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 2px 0; }
+.img-tools .hint { font-size: 13px; color: var(--ink-mute); }
+html.img-zoom-open, html.img-zoom-open body { overflow: hidden; }
+.img-zoom { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; background: rgba(12, 15, 22, 0.96); }
+.img-zoom[hidden] { display: none; }
+.img-zoom-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; background: #fff; border-bottom: 1px solid var(--border); }
+.img-zoom-bar .ctrl { min-width: 40px; justify-content: center; }
+.img-zoom-pct { min-width: 56px; text-align: center; font: 600 13px var(--sans); color: var(--ink); }
+.img-zoom-hint { flex: 1 1 auto; font-size: 13px; color: var(--ink-mute); }
+.img-zoom-bar [data-z="close"] { margin-left: auto; }
+.img-zoom-stage { position: relative; flex: 1 1 auto; overflow: hidden; touch-action: none; cursor: grab; }
+.img-zoom-stage:active { cursor: grabbing; }
+.img-zoom-stage img { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; user-select: none; -webkit-user-drag: none; }
+@media (max-width: 640px) { .img-zoom-hint { display: none; } }
+
+/* YouTube-Ausschnitt: erst nach Klick laden (Datenschutz) */
+.yt-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; overflow: hidden; }
+.yt-consent { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 20px; text-align: center; color: #cdd6e2; background: #11151d; z-index: 1; }
+.yt-consent[hidden] { display: none; }
+.yt-consent p { margin: 0; max-width: 520px; line-height: 1.5; }
+.yt-consent b { color: #fff; }
+.yt-consent .yt-note { font-size: 13px; color: #9aa6b6; }
+.yt-consent .yt-note a { color: #9cc0ff; }
+/* YT.Player ersetzt das div durch das iframe, deshalb ueber den Wrapper ansprechen. */
+.yt-player, .yt-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.yt-player[hidden] { display: none; }
