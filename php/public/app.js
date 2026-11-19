@@ -71,83 +71,119 @@
      Zeiten nach aussen sind relativ zum Ausschnitt: 0 = Start des Ausschnitts.
      Die YouTube-Bedienleiste ist aus; Zeitleiste, Sprungmarken und Zeitstempel
      laufen ueber die eigene Steuerung, die den Ausschnitt nicht verlassen kann.
-     Geladen wird erst nach Klick auf "Video laden" (Datenschutz). */
+     Datensparsam: geladen wird erst nach Klick auf "Video laden", und zwar nur
+     das iframe von youtube-nocookie.com. Die Steuerung laeuft per postMessage
+     direkt mit diesem iframe; die Lab-Seite selbst laedt nichts von youtube.com
+     (die offizielle iframe_api kaeme von www.youtube.com, mitsamt Cookies). */
   function makeYoutubeTransport() {
     var Y = MEDIA.youtube || {}, S = +Y.start || 0, E = (Y.end == null) ? null : +Y.end;
-    var player = null, ready = false, rate = 1, pendingT = 0, wantPlay = false, poll = null;
+    var ORIGIN = "https://www.youtube-nocookie.com";
+    var frame = null, ready = false, rate = 1, pendingT = 0, wantPlay = false, loading = false;
+    var cur = S, curAt = 0, pstate = -1, vdur = 0, hello = null;
     var wrap = document.getElementById("ytWrap"), consent = document.getElementById("ytConsent"), host = document.getElementById("ytPlayer");
+    var btn = document.getElementById("ytLoad");
 
-    function absEnd() { if (E != null) return E; var d = ready ? player.getDuration() : 0; return d > S ? d : S; } // ohne Endzeit: Laenge erst nach dem Laden bekannt
-    function abs() { return ready ? (player.getCurrentTime() || 0) : S + pendingT; }
+    function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+    function send(func, args) {
+      if (!frame || !frame.contentWindow) return;
+      frame.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [], id: 1, channel: "widget" }), ORIGIN);
+    }
+    function absEnd() { if (E != null) return E; return vdur > S ? vdur : S; } // ohne Endzeit: Laenge erst nach dem Laden bekannt
+    // Der Player meldet die Zeit nur einige Male pro Sekunde; dazwischen wird hochgerechnet.
+    function abs() {
+      if (!ready) return S + pendingT;
+      var t = cur + (pstate === 1 ? (now() - curAt) / 1000 * rate : 0);
+      return Math.min(t, absEnd());
+    }
+    function seekAbs(t) { cur = t; curAt = now(); send("seekTo", [t, true]); }
     var self = {
       getTime: function () { return clamp(abs() - S, 0, absEnd() - S); },
       getDuration: function () { return absEnd() - S; },
       getFps: function () { return FPS; },
-      isPlaying: function () { return ready && player.getPlayerState() === 1; },
+      isPlaying: function () { return ready && pstate === 1; },
       play: function () {
         if (!ready) { wantPlay = true; load(); return; }
-        if (abs() >= absEnd() - 0.1) player.seekTo(S, true); // am Ende: von vorn
-        player.playVideo();
+        if (abs() >= absEnd() - 0.1) seekAbs(S); // am Ende: von vorn
+        send("playVideo");
       },
-      pause: function () { wantPlay = false; if (ready) player.pauseVideo(); updateUI(self); },
+      pause: function () { wantPlay = false; if (ready) { cur = abs(); curAt = now(); send("pauseVideo"); pstate = 2; } updateUI(self); },
       toggle: function () { self.isPlaying() ? self.pause() : self.play(); },
       setTime: function (t) {
         t = clamp(t, 0, self.getDuration());
         if (!ready) { pendingT = t; updateUI(self); return; }
-        player.seekTo(S + t, true); updateUI(self);
+        seekAbs(S + t); updateUI(self);
       },
       step: function (dir) { self.pause(); self.setTime(self.getTime() + dir / FPS); },
       nudge: function (sec) { self.pause(); self.setTime(self.getTime() + sec); },
-      setRate: function (r) { rate = r; if (ready) player.setPlaybackRate(r); },
+      setRate: function (r) { rate = r; if (ready) send("setPlaybackRate", [r]); },
     };
 
     // Waechter: haelt die Wiedergabe im Ausschnitt.
     function guard() {
       if (!ready) return;
-      var t = player.getCurrentTime() || 0;
-      if (t < S - 0.25) player.seekTo(S, true);
-      else if (t >= absEnd() - 0.05 && player.getPlayerState() === 1) { player.pauseVideo(); player.seekTo(absEnd() - 0.05, true); }
+      var t = abs();
+      if (t < S - 0.25) seekAbs(S);
+      else if (pstate === 1 && t >= absEnd() - 0.05) { send("pauseVideo"); pstate = 2; seekAbs(absEnd() - 0.05); }
       updateUI(self);
     }
 
-    var loading = false;
+    function onMessage(e) {
+      if (!frame || e.source !== frame.contentWindow || e.origin !== ORIGIN) return;
+      var d; try { d = typeof e.data === "string" ? JSON.parse(e.data) : e.data; } catch (_) { return; }
+      if (!d || !d.event) return;
+      if (d.event === "onReady" && !ready) {
+        ready = true; clearInterval(hello);
+        if (consent) consent.hidden = true;
+        send("setPlaybackRate", [rate]);
+        seekAbs(S + pendingT);
+        if (wantPlay) send("playVideo"); else send("pauseVideo");
+        setInterval(guard, 100);
+      } else if (d.event === "infoDelivery" && d.info) {
+        if (typeof d.info.currentTime === "number") { cur = d.info.currentTime; curAt = now(); }
+        if (typeof d.info.playerState === "number") pstate = d.info.playerState;
+        if (typeof d.info.duration === "number" && d.info.duration > 0) vdur = d.info.duration;
+        if (typeof d.info.playbackRate === "number") rate = d.info.playbackRate;
+      } else if (d.event === "onStateChange") {
+        pstate = +d.info;
+        // Natuerliches Ende: zurueck an den Start statt Vorschlagsliste.
+        if (pstate === 0) { seekAbs(S); send("pauseVideo"); pstate = 2; }
+      } else if (d.event === "onError") {
+        if (consent) { consent.hidden = false; if (btn) btn.textContent = "Video nicht verfügbar"; }
+      }
+      updateUI(self);
+    }
+    window.addEventListener("message", onMessage);
+
     function load() {
       if (loading || !host) return; loading = true;
-      if (consent) consent.querySelector("button").textContent = "Video wird geladen …";
-      function create() {
-        host.hidden = false;
-        var params = { start: Math.floor(S), controls: 0, disablekb: 1, rel: 0, playsinline: 1, iv_load_policy: 3, fs: 0, enablejsapi: 1, origin: location.origin };
-        if (E != null) params.end = Math.ceil(E);
-        player = new YT.Player(host, {
-          host: "https://www.youtube-nocookie.com",
-          videoId: Y.id, width: "100%", height: "100%", playerVars: params,
-          events: {
-            onReady: function () {
-              ready = true; if (consent) consent.hidden = true;
-              var f = player.getIframe(); if (f) f.title = host.dataset.title || "Video zur Übung";
-              player.setPlaybackRate(rate);
-              player.seekTo(S + pendingT, true);
-              if (wantPlay) player.playVideo(); else player.pauseVideo();
-              poll = setInterval(guard, 100);
-              updateUI(self);
-            },
-            onStateChange: function (e) {
-              // Natuerliches Ende (Ausschnitt ohne Endzeit): zurueck an den Start statt Vorschlagsliste.
-              if (e.data === 0) { player.seekTo(S, true); player.pauseVideo(); }
-              updateUI(self);
-            },
-            onError: function () { if (consent) { consent.hidden = false; consent.querySelector("button").textContent = "Video nicht verfügbar"; } }
+      if (btn) btn.textContent = "Video wird geladen …";
+      var q = { start: Math.floor(S), controls: 0, disablekb: 1, rel: 0, playsinline: 1, iv_load_policy: 3, fs: 0, enablejsapi: 1, origin: location.origin };
+      if (E != null) q.end = Math.ceil(E);
+      frame = document.createElement("iframe");
+      frame.src = ORIGIN + "/embed/" + encodeURIComponent(Y.id) + "?" + Object.keys(q).map(function (k) { return k + "=" + encodeURIComponent(q[k]); }).join("&");
+      frame.title = host.dataset.title || "Video zur Übung";
+      frame.allow = "autoplay; encrypted-media; picture-in-picture";
+      frame.referrerPolicy = "strict-origin-when-cross-origin";
+      frame.addEventListener("load", function () {
+        // Anmelden, bis der Player "onReady" meldet (wie es die offizielle API auch tut).
+        var n = 0;
+        clearInterval(hello);
+        hello = setInterval(function () {
+          if (ready || ++n > 40) {
+            clearInterval(hello);
+            if (!ready) { // nach 10 s ohne Antwort: aufraeumen, erneuter Klick laedt neu
+              if (frame && frame.parentNode) frame.parentNode.removeChild(frame);
+              frame = null; loading = false;
+              if (consent) consent.hidden = false; if (btn) btn.textContent = "Video reagiert nicht, erneut versuchen";
+            }
+            return;
           }
-        });
-      }
-      if (window.YT && window.YT.Player) { create(); return; }
-      var prev = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = function () { if (prev) prev(); create(); };
-      var sc = document.createElement("script"); sc.src = "https://www.youtube.com/iframe_api"; sc.async = true;
-      sc.onerror = function () { loading = false; if (consent) consent.querySelector("button").textContent = "Laden fehlgeschlagen, erneut versuchen"; };
-      document.head.appendChild(sc);
+          frame.contentWindow.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), ORIGIN);
+        }, 250);
+      });
+      host.hidden = false;
+      host.appendChild(frame);
     }
-    var btn = document.getElementById("ytLoad");
     if (btn) btn.addEventListener("click", function () { load(); });
     if (wrap && consent) wrap.addEventListener("click", function (e) { if (!ready && e.target === consent) load(); });
     return self;
