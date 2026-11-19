@@ -1550,3 +1550,16 @@ a.sub-title:hover { color: var(--accent); }
   .admin-row > div:first-child { min-width: 0; overflow-wrap: anywhere; }
 }
 .nu-row .field-hint, .nu-ki .field-hint { font-size: 13px; }
+
+/* Nach dem Feedback: Text überarbeiten, Hinweise zugeklappt nachlesbar */
+.hint-banner .row { flex-wrap: wrap; }
+.hint-banner .toggle + .toggle { margin-left: 0; }
+.hint-banner .toggle.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.hint-banner .toggle.primary:hover { background: var(--accent); color: #fff; filter: brightness(1.08); }
+.rev-hints { margin-top: 10px; }
+.rev-hints summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.rev-hints ol { margin: 8px 0 0; padding-left: 22px; }
+.rev-hints li { margin: 0 0 10px; }
+.rev-hints .rev-cat { font-weight: 600; font-size: 13px; }
+.rev-hints .rev-quote { color: var(--ink-mute); font-style: italic; }
+.rev-hints .rev-nudge { margin-top: 4px; font-size: 13px; color: var(--ink-mute); }

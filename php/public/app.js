@@ -294,6 +294,7 @@
 
   var phase = "writing", typeTimer = null, typed = 0, typingDone = false;
   var markers = [], submittedText = "", markersHidden = false, demoText = demo.studentText || "";
+  var lastHints = []; // Marker der letzten Rueckmeldung in Chip-Reihenfolge (zum Nachlesen beim Ueberarbeiten)
 
   function escapeHTML(s) { return s.replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }).replace(/\n/g, "<br>"); }
   function countWords(s) { return s.trim() ? s.trim().split(/\s+/).length : 0; }
@@ -343,6 +344,7 @@
   function resumeEditing() {
     if (phase === "writing") return;
     var keep = submittedText || (editor ? editor.innerText : "");
+    var hadFeedback = phase === "feedback" && lastHints.length > 0;
     phase = "writing"; typingDone = true; markers = [];
     if (editorShell) editorShell.classList.remove("markers-hidden");
     hideTip(true);
@@ -350,7 +352,24 @@
     editor.innerHTML = escapeHTML(keep);
     setWordCount(countWords(keep));
     if (liveLabel) liveLabel.textContent = "live · du schreibst";
+    if (hadFeedback) showRevisionHints(); else if (hintBanner) hintBanner.className = "hint-banner";
     syncAiBtn();
+  }
+
+  /** Waehrend des Ueberarbeitens bleiben die Fragen der KI nachlesbar,
+      aber zugeklappt: Studierende entscheiden selbst, ob sie sie oeffnen. */
+  function showRevisionHints() {
+    if (!hintBanner) return;
+    var items = lastHints.map(function (h) {
+      var color = colorByCat[h.category] || "var(--ink-mute)";
+      return '<li><span class="rev-cat" style="color:' + color + '">' + escapeHTML(labelByCat[h.category] || h.category) + "</span> " +
+        '<span class="rev-quote">„' + escapeHTML(h.quote) + '“</span><br>' + escapeHTML(h.question) +
+        (h.nudge ? '<div class="rev-nudge">' + escapeHTML(h.nudge) + "</div>" : "") + "</li>";
+    }).join("");
+    hintBanner.style.background = ""; hintBanner.style.borderColor = "";
+    hintBanner.className = "hint-banner show";
+    hintBanner.innerHTML = '<div class="row"><span class="icon">✎</span><span>Du überarbeitest deinen Text. Wenn du fertig bist, hol dir mit <b>KI Feedback</b> eine neue Rückmeldung.</span></div>' +
+      '<details class="rev-hints"><summary>Hinweise der letzten Rückmeldung (' + lastHints.length + ")</summary><ol>" + items + "</ol></details>";
   }
 
   /** Textfeld leeren, damit man ohne Umweg eigene Saetze schreiben kann. */
@@ -381,6 +400,14 @@
       // solange der Text noch kurz genug ist, um ihn ohne Aerger neu zu schreiben.
       if (EX.loggedIn === false) nudgeLoginFirst();
     });
+  }
+
+  function placeCaretAtEnd() {
+    if (!editor) return;
+    editor.focus();
+    var sel = window.getSelection(); if (!sel) return;
+    var range = document.createRange(); range.selectNodeContents(editor); range.collapse(false);
+    sel.removeAllRanges(); sel.addRange(range);
   }
 
   /* ---- Zeitstempel einfügen (nur Video) ---- */
@@ -507,6 +534,7 @@
     var ranges = [];
     markers.forEach(function (mk, idx) { var s = submittedText.indexOf(mk.quote); if (s >= 0) ranges.push({ start: s, end: s + mk.quote.length, idx: idx }); });
     ranges.sort(function (a, b) { return a.start - b.start; });
+    lastHints = ranges.map(function (r) { return markers[r.idx]; });
     var html = "", cursor = 0, n = 0;
     ranges.forEach(function (r) {
       if (r.start > cursor) html += escapeHTML(submittedText.slice(cursor, r.start)); n++;
@@ -520,12 +548,14 @@
     if (hintBanner) {
       if (n > 0) {
         hintBanner.className = "hint-banner show";
-        hintBanner.innerHTML = '<div class="row"><span class="icon">💡</span><span>Die KI hat <b>' + n + ' Stellen</b> markiert, an denen du präziser werden könntest. Öffne einen Marker nur, wenn du Feedback dazu möchtest — die Hinweise sind <b>Fragen, keine Lösungen</b>. Du schreibst.</span><button class="toggle" type="button" id="toggleMarkers">Marker ausblenden</button></div>';
+        hintBanner.innerHTML = '<div class="row"><span class="icon">💡</span><span>Die KI hat <b>' + n + ' Stellen</b> markiert, an denen du präziser werden könntest. Öffne einen Marker nur, wenn du Feedback dazu möchtest — die Hinweise sind <b>Fragen, keine Lösungen</b>. Du schreibst.</span><button class="toggle" type="button" id="toggleMarkers">Marker ausblenden</button><button class="toggle primary" type="button" id="reviseBtn">Text überarbeiten</button></div>';
         document.getElementById("toggleMarkers").addEventListener("click", function () { markersHidden = editorShell.classList.toggle("markers-hidden"); this.textContent = markersHidden ? "Marker einblenden" : "Marker ausblenden"; if (markersHidden) { tipPinned = false; clearOpened(); hideTip(true); } });
       } else {
         hintBanner.className = "hint-banner show";
-        hintBanner.innerHTML = '<div class="row"><span class="icon">✅</span><span>Die KI hat hier <b>keine Stellen</b> markiert — deine Beschreibung ist schon recht präzise.</span></div>';
+        hintBanner.innerHTML = '<div class="row"><span class="icon">✅</span><span>Die KI hat hier <b>keine Stellen</b> markiert — deine Beschreibung ist schon recht präzise.</span><button class="toggle primary" type="button" id="reviseBtn">Text überarbeiten</button></div>';
       }
+      var rev = document.getElementById("reviseBtn");
+      if (rev) rev.addEventListener("click", function () { tipPinned = false; resumeEditing(); placeCaretAtEnd(); });
     }
     editor.querySelectorAll(".note-chip").forEach(function (chip) {
       var idx = chip.dataset.idx, mark = editor.querySelector('.mark[data-idx="' + idx + '"]');
