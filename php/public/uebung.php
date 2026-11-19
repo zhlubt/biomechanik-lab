@@ -28,7 +28,7 @@ if ($ex === null) {
 }
 
 // Medien nach Typ/Komponente auflösen
-$jumpLab = null; $knee = null; $embed = null; $video = null; $model = null; $image = null;
+$jumpLab = null; $knee = null; $embed = null; $video = null; $model = null; $image = null; $frame = null;
 foreach (($ex['media'] ?? []) as $m) {
     if (($m['type'] ?? '') === 'interactive' && ($m['component'] ?? '') === 'JumpForceLab') $jumpLab = $m;
     if (($m['type'] ?? '') === 'interactive' && ($m['component'] ?? '') === 'KneeFrontal') $knee = $m;
@@ -36,26 +36,32 @@ foreach (($ex['media'] ?? []) as $m) {
     if (($m['type'] ?? '') === 'video' && $video === null) $video = $m;
     if (($m['type'] ?? '') === 'model3d' && $model === null) $model = $m;
     if (($m['type'] ?? '') === 'image' && $image === null) $image = $m;
+    // Eigenständige Animationsseite unter public/anim/, per iframe eingebettet (bringt ihre eigene Steuerung mit).
+    if (($m['type'] ?? '') === 'frame' && $frame === null && preg_match('~^anim/[a-z0-9-]+\.html$~', (string)($m['src'] ?? ''))) $frame = $m;
 }
-// Primär-Medium: Video > 3D-Modell > Standbild (Diagramm/Messschrieb) > Sprung-Simulation
+// Primär-Medium: Video > 3D-Modell > Animationsseite > Standbild (Diagramm/Messschrieb) > Sprung-Simulation
 $isVideo = $video !== null;
 $isModel = $model !== null;
-$isImage = !$isVideo && !$isModel && $image !== null;
-$primary = $isVideo ? $video : ($isModel ? $model : ($isImage ? $image : $jumpLab));
+$isFrame = !$isVideo && !$isModel && $frame !== null;
+$isImage = !$isVideo && !$isModel && !$isFrame && $image !== null;
+$primary = $isVideo ? $video : ($isModel ? $model : ($isFrame ? $frame : ($isImage ? $image : $jumpLab)));
 $cfg = ($primary['config'] ?? []);
-// Standbild und 3D-Modell haben keine Zeitachse -> weder Transport noch Zeitstempel.
-$useTimestamps = ((bool)($ex['timestampMode'] ?? false) || $isVideo) && !$isModel && !$isImage;
+// Standbild, 3D-Modell und Animationsseite haben keine Zeitachse der Übungsseite -> weder Transport noch Zeitstempel.
+$noTransport = $isModel || $isImage || $isFrame;
+$useTimestamps = ((bool)($ex['timestampMode'] ?? false) || $isVideo) && !$noTransport;
 
 // Client-sichere Daten (OHNE feedbackPrompt!)
 $client = [
     'locator'     => $loc,
     'media'       => [
-        'kind'        => $isVideo ? 'video' : ($isModel ? 'model3d' : ($isImage ? 'image' : 'jumpforce')),
-        'src'         => $isVideo ? ($video['src'] ?? '') : ($isModel ? ($model['src'] ?? '') : ($isImage ? ($image['src'] ?? '') : null)),
+        'kind'        => $isVideo ? 'video' : ($isModel ? 'model3d' : ($isFrame ? 'frame' : ($isImage ? 'image' : 'jumpforce'))),
+        'src'         => $isVideo ? ($video['src'] ?? '') : ($isModel ? ($model['src'] ?? '') : ($isFrame ? ($frame['src'] ?? '') : ($isImage ? ($image['src'] ?? '') : null))),
         'durationSec' => $cfg['durationSec'] ?? 3.0,
         'fps'         => $cfg['fps'] ?? 30,
         // Methoden-Fundus: rein datengetrieben, siehe public/media-methods.js
         'methods'     => $primary['methods'] ?? null,
+        // 3D-Betrachter: anfangs ausgeblendete Schichten (model-viewer.js liest media.config.initialHidden).
+        'config'      => $isModel ? ['initialHidden' => array_values((array)($cfg['initialHidden'] ?? []))] : null,
     ],
     'timestamps'  => $useTimestamps,
     'phases'      => $cfg['phases'] ?? [],
@@ -119,6 +125,13 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
                 <span class="hint">Drehen: ziehen · Zoom: Mausrad / Pinch · Verschieben: Rechtsklick&nbsp;+&nbsp;ziehen</span>
               </div>
             </div>
+          <?php elseif ($isFrame): ?>
+            <figure class="frame-embed">
+              <iframe id="labFrame" src="<?= esc(asset($frame['src'])) ?>" title="<?= esc($frame['alt'] ?? $frame['label'] ?? 'Animation zur Übung') ?>" allow="fullscreen"></iframe>
+              <?php if (!empty($frame['caption'])): ?>
+              <figcaption><?= esc($frame['caption']) ?></figcaption>
+              <?php endif; ?>
+            </figure>
           <?php elseif ($isImage): ?>
             <figure style="margin:0">
               <div class="ro-figure" id="mediaHost">
@@ -137,7 +150,7 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
           <?php else: ?>
             <svg id="stage" class="stage" viewBox="0 0 720 460" preserveAspectRatio="xMidYMid meet" aria-label="Schematische Sprunganimation mit Kraftkurven"></svg>
           <?php endif; ?>
-          <?php if (!$isModel && !$isImage): ?>
+          <?php if (!$noTransport): ?>
           <div class="scrub-wrap">
             <div class="scrub" id="scrub"><div class="track"><div class="fill"></div></div><div class="head"></div></div>
             <div class="phases" id="phases">
@@ -320,6 +333,19 @@ $crumbModule = !empty($ex['course']['module']) ? $ex['course']['module'] . ' · 
   <?= site_footer($ex['course']['title'] ?? '') ?>
 </div>
 
+<?php if ($isFrame): ?>
+<script>
+/* Die Animationsseite meldet ihre Höhe (anim/js/frame.js); nur vom eigenen iframe und Ursprung annehmen. */
+(function () {
+  var f = document.getElementById('labFrame');
+  window.addEventListener('message', function (e) {
+    if (!f || e.source !== f.contentWindow || e.origin !== window.location.origin) return;
+    var d = e.data || {};
+    if (d.type === 'lab-frame-height' && typeof d.h === 'number' && d.h > 100 && d.h < 4000) f.style.height = d.h + 'px';
+  });
+})();
+</script>
+<?php endif; ?>
 <script>window.EXERCISE = <?= json_encode($client, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
 <?php if ($isModel): ?>
 <script type="importmap">

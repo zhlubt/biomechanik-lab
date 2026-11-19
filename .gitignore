@@ -52,3 +52,6 @@ php/private/data/
 
 # Prod-Datensicherungen (personenbezogen) - nie ins Repo
 backup/
+
+# Deploy: Manifest des zuletzt hochgeladenen Inhalts (scripts/content-sync.py)
+/.deploy-state/

@@ -9,6 +9,7 @@ if (!function_exists('esc')) {
 function exercise_kind(array $ex): string {
     foreach (($ex['media'] ?? []) as $m) { if (($m['type'] ?? '') === 'video') return 'video'; }
     foreach (($ex['media'] ?? []) as $m) { if (($m['type'] ?? '') === 'model3d') return 'model3d'; }
+    foreach (($ex['media'] ?? []) as $m) { if (($m['type'] ?? '') === 'frame') return 'frame'; }
     foreach (($ex['media'] ?? []) as $m) { if (($m['type'] ?? '') === 'interactive') return 'animation'; }
     return 'medium';
 }
@@ -17,9 +18,9 @@ function exercise_kind(array $ex): string {
 function ex_card(array $loc, array $ex, array $done): void {
     $kind = exercise_kind($ex);
     $exId = $loc['course'] . '/' . $loc['lesson'] . '/' . $loc['exercise'];
-    $kindLabel = $kind === 'video' ? 'Video-Analyse' : ($kind === 'model3d' ? '3D-Modell' : ($kind === 'animation' ? 'Simulation' : 'Medium'));
+    $kindLabel = $kind === 'video' ? 'Video-Analyse' : ($kind === 'model3d' ? '3D-Modell' : ($kind === 'frame' ? '3D-Animation' : ($kind === 'animation' ? 'Simulation' : 'Medium')));
     // Schlichte Glyphen statt Piktogrammen (Hausregel: Symbole minimalistisch).
-    $icon = $kind === 'video' ? '▷' : ($kind === 'model3d' ? '◳' : ($kind === 'image' ? '◱' : '◰'));
+    $icon = $kind === 'video' ? '▷' : ($kind === 'model3d' || $kind === 'frame' ? '◳' : ($kind === 'image' ? '◱' : '◰'));
     $thumb = trim((string)($ex['thumbnail'] ?? ''));
     $isDone = isset($done[$exId]);
     ?>

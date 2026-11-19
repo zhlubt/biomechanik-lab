@@ -48,11 +48,17 @@ Titel, Einstieg, Aufgabe, Medien, Legende, Glossar, Schreibgerüst,
 Zielkonzepte, den Feedback-Prompt und die Musterlösung. Es gibt keine global
 hartkodierten Prompts, jede Übung hat ihren eigenen.
 
-Angelegt wird eine Übung entweder von Hand oder über die Pflegeoberfläche
-(`php/public/pflege.php`, passwortgeschützt), die ein Gerüst erzeugt und
-optional aus einem Bild Textfelder vorschlägt. Das Formular kennt bisher nur
-die Medientypen Video und Sprungkraft-Labor; Bild- und 3D-Übungen entstehen
-durch Kopieren einer bestehenden JSON.
+Angelegt wird eine Übung über die Pflegeoberfläche (`php/public/pflege.php`,
+passwortgeschützt, „Neue Übung“). Das Formular kennt alle Medientypen (Video,
+Bild mit Ablese-Werkzeug, 3D-Modell, Animation, Sprung-Simulation) und alle
+Felder der Übungsseite. Gespeichert wird über `create.php`; jede Eingabe läuft
+durch die Erlaubnisliste in `php/private/lib/exercise.php`.
+
+Für die didaktische Planung gibt es eine Anleitung für Sprachmodelle,
+`php/private/llm-anleitung.md`. Lehrende kopieren sie im Formular in einen
+KI-Chat, entwickeln die Übung im Dialog (Zielgruppe, Lernziel, Medium,
+Schwierigkeit, Feedback) und fügen das Ergebnis als JSON wieder ins Formular
+ein.
 
 Enthaltene Bereiche: `biomechanik/` (drei Übungen), `leichtathletik/` (eine),
 `zerspanung/` (eine, Kraft aus dem Piezosensor gegen Wirkleistung der
@@ -159,6 +165,11 @@ ZHL-Hosting-Platz. Details und die Rechte-Fallen stehen in
   Übung" zeigt. Das Skript setzt die Rechte deshalb selbst.
 - Statische Dateien bekommen über `asset()` einen Versionsstempel aus der
   Mtime, sonst liefert der Browser nach einem Deploy die alte Datei.
+- Übungen entstehen auch auf dem Server. Vor jedem Upload vergleicht
+  `scripts/content-sync.py` den Server-Stand von `private/content` mit dem
+  lokalen und dem Stand des letzten Deploys und bricht ab, wenn auf dem Server
+  etwas geändert wurde. `--pull` holt den Server-Stand, `--force-content`
+  überschreibt bewusst.
 
 Die Zugangsdaten erwartet das Skript in einer `.env` im Projektwurzel, die
 nicht im Repository liegt. Ein Fork braucht hier seine eigenen Werte.
@@ -169,7 +180,13 @@ nicht im Repository liegt. Ein Fork braucht hier seine eigenen Werte.
 - Passwort-Reset, sobald es wieder E-Mail-Konten gibt.
 - Eine `kurs.json` je Bereich, damit Kurstitel nicht redundant in jeder
   Übung stehen.
-- Bild- und 3D-Medientypen im Anlege-Formular.
+- Bearbeiten-Seite einer bestehenden Übung (`pflege.php?ex=…`) erweitern: Sie
+  kennt nur Titel, Intro, Aufgabe, Vorschaubild, Zielkonzepte,
+  Medienbeschreibung, Prompt und Musterlösung. Legende, Glossar, Leitfaden,
+  Schreibgerüst, Kategorien, Demo und Medium (Tausch, Sprungmarken,
+  Ablese-Werkzeug) gehen bisher nur über die JSON. Der Zeilen-Editor aus
+  `pflege-neu.js` lässt sich dafür wiederverwenden. Anlegen mit Medien-Upload
+  funktioniert bereits.
 - Video-Upload mit Bewegungsanalyse. Hierher gehört das WurfTool
   (`mockups/v3_wurfvideo/`), eine eigene Pipeline mit Kennzahl-Extraktion.
 

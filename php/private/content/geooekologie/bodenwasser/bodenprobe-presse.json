@@ -1,0 +1,211 @@
+{
+  "id": "bodenprobe-presse",
+  "course": {
+    "id": "geooekologie",
+    "title": "Geoökologie",
+    "module": "Bodenphysik im Labor",
+    "appTitle": "Bodenphysik-Lab",
+    "order": 10
+  },
+  "lesson": {
+    "id": "bodenwasser",
+    "title": "Von der ungestörten Probe zur Leitfähigkeit"
+  },
+  "number": "1",
+  "title": "Die ungestörte Bodenprobe: Jeder Handgriff hat einen Grund",
+  "intro": "Im Gelände wird in drei Tiefen eines Bodenprofils je eine Probe mit einem 250-cm³-Stechzylinder entnommen. Die Animation zeigt die sieben Arbeitsschritte mit der Hydraulikpresse. Beschreibe den Ablauf so, dass jemand ihn nachmachen kann und versteht, wozu jeder Schritt dient.",
+  "status": "Teil 1 von 2: Probenahme",
+  "thumbnail": "img/thumb_bodenprobe.png",
+  "media": [
+    {
+      "type": "frame",
+      "src": "anim/probenahme.html",
+      "label": "01 · Probenahme mit der Hydraulikpresse (3D)",
+      "alt": "3D-Animation: Eine Hydraulikpresse drückt einen Stechzylinder in den Boden, der Zylinder wird freigegraben, eine Platte wird untergeschoben und die Probe herausgehoben, nacheinander in drei Tiefen.",
+      "caption": "Die Tiefen 0–5, 20–25 und 45–50 cm sind Beispiele. Die Presse ist ein Platzhalter für die Eigenbau-Presse des Lehrstuhls. Mit den Knöpfen 1 bis 7 und der Zeitleiste siehst du jeden Arbeitsschritt einzeln, oben links wählst du die Schicht. Die Szene lässt sich mit der Maus drehen und zoomen."
+    }
+  ],
+  "timestampMode": false,
+  "legend": [
+    {
+      "color": "#8a949c",
+      "label": "Stechzylinder",
+      "hint": "250 cm³, Edelstahl, Ø 8 cm innen, 5 cm hoch, unten angeschärft.",
+      "colorName": "Edelstahl"
+    },
+    {
+      "color": "#d99a12",
+      "label": "Hydraulikpresse",
+      "hint": "Eigenbau: Rahmen mit Hydraulikzylinder, seitlich Pumpe mit Hebel. Drückt den Zylinder ein.",
+      "colorName": "gelb"
+    },
+    {
+      "color": "#7d8790",
+      "label": "Platte",
+      "hint": "Wird unter den Zylinder geschoben und trägt den Kern beim Herausheben.",
+      "colorName": "grau"
+    },
+    {
+      "color": "#2f6fa3",
+      "label": "Deckel und Etikett",
+      "hint": "Verschließen beide Enden; das Etikett trägt Standort, Tiefe und Datum.",
+      "colorName": "blau"
+    },
+    {
+      "color": "#7d5433",
+      "label": "Horizonte A, B, C",
+      "hint": "A Oberboden, B Unterboden, C Ausgangsgestein. Für die tieferen Proben ist je eine Grube bis 20 bzw. 45 cm ausgehoben.",
+      "colorName": "Profilwand"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Ungestörte Probe",
+      "definition": "Bodenprobe, deren natürliche Lagerung und Hohlräume erhalten bleiben. Gegenstück ist die gestörte Probe, etwa mit dem Spaten entnommen, für Körnung oder Chemie."
+    },
+    {
+      "term": "Stechzylinder",
+      "definition": "Stahlring mit bekanntem Volumen (hier 250 cm³) und angeschärfter Unterkante, der Schneide. Damit werden ungestörte Proben entnommen."
+    },
+    {
+      "term": "Bodengefüge",
+      "definition": "Räumliche Anordnung der festen Bodenteilchen und der Hohlräume: Aggregate, Risse, Wurzel- und Wurmgänge."
+    },
+    {
+      "term": "Lagerungsdichte ρb",
+      "definition": "Masse des ofentrockenen Bodens geteilt durch das Volumen der ungestörten Probe: ρb = m_trocken / V. Auch Trockenrohdichte genannt."
+    },
+    {
+      "term": "Porosität φ",
+      "definition": "Anteil der Hohlräume am Bodenvolumen: φ = 1 − ρb / ρs. ρs ist die Dichte der festen Teilchen, meist etwa 2,65 g/cm³."
+    },
+    {
+      "term": "Volumetrischer Wassergehalt θ",
+      "definition": "Wasservolumen geteilt durch Bodenvolumen: θ = (m_feucht − m_trocken) / (ρw · V)."
+    },
+    {
+      "term": "Bodenhorizont",
+      "definition": "Lage im Bodenprofil mit einheitlichen Merkmalen, zum Beispiel A (Oberboden), B (Unterboden), C (Ausgangsgestein)."
+    },
+    {
+      "term": "Grubensohle",
+      "definition": "Boden einer ausgehobenen Grube. Für tiefere Proben wird sie zur Ansatzfläche des Zylinders."
+    },
+    {
+      "term": "Probenahmeartefakt",
+      "definition": "Veränderung der Probe durch die Entnahme selbst, etwa Verdichtung, Risse, eine ausgebrochene Unterseite oder Wasserverlust."
+    }
+  ],
+  "guidance": {
+    "title": "So beschreibst du einen Arbeitsablauf im Gelände",
+    "steps": [
+      "Schau die Animation einmal ganz durch, dann Schritt für Schritt über die Knöpfe 1 bis 7.",
+      "Benenne Geräte, Teile und Orte mit ihrem Fachwort. Legende und Glossar helfen dabei.",
+      "Halte die Reihenfolge ein und sag bei jedem Schritt genau, was passiert: Richtung, Tempo, bis wohin.",
+      "Frag dich bei jedem Schritt: Was ginge schief, wenn man ihn weglässt oder hastig ausführt?",
+      "Verbinde den Ablauf mit dem Zweck: Welche Größen sollen später im Labor aus genau dieser Probe bestimmt werden?"
+    ]
+  },
+  "task": "Beschreibe in eigenen Worten, wie im Gelände eine ungestörte Bodenprobe mit Stechzylinder und Hydraulikpresse gewonnen wird. Geh die Arbeitsschritte in der richtigen Reihenfolge durch und begründe bei jedem, warum er so ausgeführt wird. Erkläre außerdem, warum für die tieferen Schichten zuerst eine Grube ausgehoben wird und welche Größen im Labor aus der Probe bestimmt werden. Klick danach auf „KI Feedback“.",
+  "scaffold": [
+    {
+      "step": "Sehen",
+      "text": "Welche sieben Arbeitsschritte zeigt die Animation, und in welcher Reihenfolge?"
+    },
+    {
+      "step": "Benennen",
+      "text": "Wie heißen Gerät, Teile und Orte fachlich: der Ring, seine Unterkante, der Boden der Grube, die Bodenlagen?"
+    },
+    {
+      "step": "Begründen",
+      "text": "Was soll jeder Schritt schützen? Denk an das Volumen, das Gefüge und den Wassergehalt der Probe."
+    },
+    {
+      "step": "Einordnen",
+      "text": "Welche Messgrößen werden später aus der Probe berechnet, und welcher Fehler im Gelände würde welche Größe verfälschen?"
+    }
+  ],
+  "feedbackCategories": [
+    {
+      "key": "ablauf",
+      "label": "Ablauf und Vollständigkeit",
+      "color": "#3a63d8"
+    },
+    {
+      "key": "fachsprache",
+      "label": "Fachsprache",
+      "color": "#d98018"
+    },
+    {
+      "key": "begruendung",
+      "label": "Begründung und Zweck",
+      "color": "#1aa56a"
+    },
+    {
+      "key": "fehlerquellen",
+      "label": "Fehlerquellen und Folgen",
+      "color": "#9a5bd4"
+    }
+  ],
+  "targetConcepts": [
+    "ungestörte Probe",
+    "Stechzylinder 250 cm³",
+    "Schneide",
+    "senkrecht aufsetzen",
+    "langsam und gleichmäßig einpressen",
+    "Hydraulikpresse statt Hammer",
+    "seitliche Risse",
+    "Verdichtung",
+    "Bodengefüge",
+    "bündig mit der Oberfläche",
+    "Grube und Grubensohle",
+    "Bodenhorizont",
+    "Freigraben bis unter die Unterkante",
+    "Platte unterschieben",
+    "Herausheben ohne Kippen",
+    "bündig abstreichen",
+    "Deckel gegen Verdunstung",
+    "Beschriftung mit Standort, Tiefe, Datum",
+    "definiertes Volumen",
+    "Feldfeuchte",
+    "Wassergehalt",
+    "Lagerungsdichte",
+    "Porosität",
+    "gesättigte Wasserleitfähigkeit Ks",
+    "Probenahmeartefakte"
+  ],
+  "mediaDescription": "Drehbare 3D-Animation in Schleife, die die Entnahme ungestörter Bodenproben mit einem Stechzylinder zeigt. Ein Bodenblock mit drei Horizonten ist treppenförmig angeschnitten: A Oberboden (0–15 cm, dunkelbraun), B Unterboden (15–40 cm, rotbraun mit Flecken), C Ausgangsgestein (ab 40 cm, hellbeige mit Steinen). Links liegt die Geländeoberfläche mit Gras, in der Mitte eine Grube bis 20 cm, rechts eine Grube bis 45 cm Tiefe. Beschriftungen an der Profilwand: \"A · Oberboden\", \"B · Unterboden\", \"C · Ausgangsgestein\".\n\nDie Probenahme läuft nacheinander in drei Tiefen: obere Schicht 0–5 cm auf der Geländeoberfläche, mittlere Schicht 20–25 cm auf der Sohle der ersten Grube, tiefe Schicht 45–50 cm auf der Sohle der zweiten Grube. Der Stechzylinder ist ein Edelstahlring mit 250 cm³ Volumen, 8 cm Innendurchmesser, 5 cm Höhe und angeschärfter Unterkante.\n\nJede Tiefe durchläuft sieben Schritte, die unter der Animation als Knöpfe 1 bis 7 stehen; zu jedem gibt es eine Bildunterschrift:\n1 Freilegen (\"Stelle vorbereiten\"): Streu und Pflanzen werden entfernt, die Oberfläche wird eingeebnet, der Zylinder wird mit der Schneide nach unten aufgesetzt. Für die tieferen Schichten steht er auf der Grubensohle.\n2 Pressen (\"Langsam einpressen\"): Eine Eigenbau-Hydraulikpresse (grauer Rahmen mit zwei Stützen und Querhaupt, gelber Hydraulikzylinder, seitliche gelbe Pumpe mit Hebel und Schlauch) senkt sich über den Zylinder. Der Kolben drückt den Zylinder senkrecht, langsam und gleichmäßig in den Boden, bis seine Oberkante bündig mit der Oberfläche ist. Bildtext: \"Ohne Hammer: Schläge erzeugen seitliche Risse.\"\n3 Abnehmen (\"Presse abnehmen\"): Die Presse wird abgehoben. Bildtext: Im Zylinder steckt jetzt ein ungestörter Bodenkern.\n4 Freigraben (\"Zylinder freigraben\"): Eine Kelle entfernt ringsum Boden bis etwas unter die Unterkante des Zylinders, der Aushub liegt daneben.\n5 Platte (\"Platte unterschieben\"): Eine flache Metallplatte wird seitlich unter den Zylinder geschoben. Bildtext: Sie trennt den Kern vom Untergrund und hält ihn von unten.\n6 Heben (\"Herausheben\"): Zylinder, Kern und Platte werden gemeinsam senkrecht herausgehoben, ohne zu kippen.\n7 Verschließen (\"Abstreichen, verschließen, beschriften\"): Überstehender Boden wird bündig abgestrichen, beide Enden werden mit blauen Deckeln verschlossen, ein weißes Etikett kommt an den Zylinder (Standort, Tiefe, Datum). Die fertige Probe wird auf ein Holztablett neben der Grube gelegt.\n\nNicht gezeigt, aber Hintergrund der Übung: Im Labor wird die Probe feldfeucht gewogen, aufgesättigt, für die Messung der gesättigten Wasserleitfähigkeit (Übung 2) verwendet und zuletzt bei 105 °C getrocknet und erneut gewogen.",
+  "feedbackPrompt": "ROLLE\nDu bist Tutor:in im bodenkundlichen Gelände- und Laborpraktikum der Geoökologie. Du begleitest Studierende, die lernen, Arbeitsschritte im Gelände fachlich korrekt zu beschreiben und zu begründen. Du unterrichtest SOKRATISCH: Du stellst Fragen, die zum nächsten Denkschritt führen. Die Antwort selbst lieferst du nie.\n\nAUFGABE\nDu bekommst (a) eine Beschreibung der Animation, (b) eine interne Musterlösung und (c) den Text einer/eines Studierenden. Du kommentierst AUSSCHLIESSLICH den Studierenden-Text und gibst 2 bis 4 Marker zurück.\n\nWAS EIN GUTER MARKER IST\nEin Marker greift genau eine Stelle im Text auf, an der ein Denkschritt fehlt, zu unscharf ist oder fachlich nicht trägt. Die stärksten Marker sind:\n- Ein Schritt ohne Begründung (\"dann wird gepresst\" -> warum so, wozu?).\n- Ein Alltagswort an einer Stelle, an der es einen Fachbegriff gibt (\"Ring\", \"Loch\", \"ganz drin\", \"ausgraben\").\n- Eine ungenaue Angabe zu Richtung, Tempo oder Endstellung des Zylinders.\n- Ein fehlender Schritt, vor allem das Abstreichen, das Beschriften oder wozu die Platte dient.\n- Eine vage Zweckangabe (\"für die Bodenanalyse\") ohne die Größen, die nur aus einer Probe mit bekanntem Volumen und erhaltenem Gefüge bestimmt werden können.\n- Eine Begründung für die Grube, die nur die Erreichbarkeit nennt und den Bezug zur Zylinderhöhe und zur definierten Probentiefe auslässt.\n\nHARTE REGELN\n1. quote MUSS ein wörtliches, zusammenhängendes Stück aus dem Studierenden-Text sein, Zeichen für Zeichen. Erfinde, kürze, glätte oder korrigiere nichts. Ist nichts wörtlich zitierbar, gib weniger Marker zurück.\n2. Nenne niemals die Lösung. Verboten sind insbesondere: einen fehlenden Fachbegriff selbst einsetzen (verweise auf Legende oder Glossar), die Begründung eines Schritts vorwegnehmen (zum Beispiel dass Schläge Risse erzeugen oder der Deckel Verdunstung verhindert), fehlende Schritte aufzählen. Frage danach.\n3. question ist EINE Frage, höchstens zwei Sätze, direkt per Du.\n4. nudge ist ein kurzer Hinweis, wohin zu schauen ist: ein Schritt-Knopf, eine Bildunterschrift, ein Glossar-Eintrag oder eine Ansicht der 3D-Szene. Das Ergebnis verrät er nicht.\n5. Ordne jeden Marker genau einer der vorgegebenen Kategorien zu.\n6. Lieber zwei scharfe Marker als vier beliebige. Ist der Text bereits präzise, gib nur einen Marker oder gar keinen zurück und erfinde keine Kritik.\n7. Antworte auf Deutsch, sachlich und freundlich, ohne Lob-Floskeln.\n\nBEISPIEL (nur als Muster für Ton und Zuschnitt, nicht inhaltlich übernehmen)\nStudierenden-Satz: \"Dann holt man die Probe raus.\"\nGuter Marker: question \"Wie bekommst du den Zylinder aus dem Boden, ohne dass unten etwas herausbricht oder der Kern verrutscht?\", nudge \"Sieh dir die Schritte 4 bis 6 von der Seite an und achte auf die Unterkante.\"\nSchlechter Marker (so NICHT): \"Richtig wäre: freigraben bis unter die Unterkante, Platte unterschieben, senkrecht heben.\" Das ist die Lösung und keine Frage.",
+  "modelSolution": "Ziel ist eine ungestörte Probe: ein Bodenkern mit genau bekanntem Volumen (250 cm³), in dem das natürliche Gefüge erhalten bleibt, also Lagerung, Poren, Risse und Wurzelgänge wie im Gelände. Nur dann stimmen später Wassergehalt, Lagerungsdichte, Porosität und gesättigte Wasserleitfähigkeit.\n\nABLAUF UND BEGRÜNDUNG\n1. Stelle vorbereiten: Streu und Pflanzen werden entfernt, die Oberfläche wird vorsichtig eingeebnet. Der Stechzylinder wird mit der angeschärften Schneide nach unten senkrecht aufgesetzt. Die Schneide schneidet den Kern aus dem Boden, statt ihn zur Seite zu drücken; die ebene Fläche sorgt dafür, dass der Zylinder gerade eindringt und am Ende gleichmäßig gefüllt ist.\n2. Einpressen: Die Hydraulikpresse drückt den Zylinder langsam, gleichmäßig und senkrecht ein, bis seine Oberkante bündig mit der Bodenoberfläche abschließt. Der stetige Druck ohne Stöße hält Verdichtung im Zylinder klein; Hammerschläge würden den Boden erschüttern und seitliche Risse erzeugen. Bündig heißt: Das Volumen von 250 cm³ ist vollständig mit Boden gefüllt.\n3. Presse abnehmen: Die Presse wird senkrecht abgehoben, ohne den Zylinder zu bewegen.\n4. Freigraben: Mit Messer oder Kelle wird ringsum Boden entfernt, bis etwas unter die Unterkante des Zylinders. So lässt er sich später lösen, ohne zu hebeln oder am Kern zu ziehen.\n5. Platte unterschieben: Eine flache Platte wird unter den Zylinder geschoben. Sie trennt den Kern an der Unterkante vom Untergrund und stützt ihn, damit beim Herausheben nichts herausfällt.\n6. Herausheben: Zylinder, Kern und Platte kommen gemeinsam und ohne Kippen heraus. Kippen oder Quetschen würde das Gefüge stören oder Material an der Unterseite herausbrechen.\n7. Abstreichen, verschließen, beschriften: Überstehender Boden wird oben und unten bündig abgestrichen, damit genau 250 cm³ im Zylinder sind. Die Deckel verhindern Verdunstung und Materialverlust, sodass der feldfeuchte Zustand bis zur ersten Wägung erhalten bleibt. Das Etikett mit Standort, Tiefe und Datum, sinnvollerweise auch mit Oben und Unten, macht die Probe eindeutig zuordenbar.\n\nWARUM EINE GRUBE FÜR DIE TIEFEREN SCHICHTEN\nDer Zylinder ist nur 5 cm hoch und erfasst immer die obersten 5 cm unter der Fläche, auf die er gesetzt wird. Für 20–25 cm und 45–50 cm wird deshalb eine Grube bis zur gewünschten Tiefe ausgehoben, und die Grubensohle wird zur neuen Ansatzfläche. So stammt jede Probe aus einem definierten Tiefenbereich und einem bestimmten Horizont (hier A, B und C), und die Presse kann auf der Sohle senkrecht ansetzen. Die Sohle sollte dabei nicht betreten und verdichtet werden.\n\nWOZU DIE PROBE IM LABOR DIENT\nWeil Volumen und Gefüge erhalten sind, lassen sich aus derselben Probe nacheinander bestimmen: der Wassergehalt zum Zeitpunkt der Probenahme aus der feldfeuchten Wägung und der Wägung nach Ofentrocknung bei 105 °C, θ = (m_feucht − m_trocken) / (ρw · V); die Lagerungsdichte ρb = m_trocken / V und daraus die Porosität φ = 1 − ρb / ρs; nach Aufsättigung die gesättigte Wasserleitfähigkeit Ks (Übung 2) und die Wasserretentionskurve.\n\nTYPISCHE FEHLER UND IHRE FOLGEN\n- Zylinder schräg oder mit Schlägen eingetrieben: Verdichtung und Risse. Die Lagerungsdichte fällt zu hoch aus, Ks wird durch Risse zu hoch oder durch Verdichtung zu niedrig.\n- Zylinder nicht vollständig gefüllt oder Unterseite ausgebrochen: Das Volumen stimmt nicht, die Lagerungsdichte fällt zu niedrig aus.\n- Spalt zwischen Kern und Zylinderwand: Bei der Ks-Messung fließt Wasser an der Wand vorbei, Ks fällt zu hoch aus.\n- Deckel vergessen oder Probe in der Sonne gelagert: Wasser verdunstet, der Wassergehalt im Feld wird unterschätzt.\nProbenahmeartefakte lassen sich nie ganz vermeiden. Jeder Schritt zielt darauf, sie klein zu halten.",
+  "demo": {
+    "studentText": "Zuerst wird die Stelle sauber gemacht und der Ring auf den Boden gestellt. Dann wird er mit der Presse reingedrückt, bis er ganz drin ist. Danach nimmt man die Presse weg und gräbt den Ring aus. Dann schiebt man eine Platte drunter und hebt alles raus. Zum Schluss kommen Deckel drauf.\nFür die tieferen Schichten muss man erst ein Loch graben, weil man da sonst nicht hinkommt. Die Probe braucht man im Labor für die Bodenanalyse.",
+    "feedback": {
+      "markers": [
+        {
+          "category": "begruendung",
+          "quote": "Dann wird er mit der Presse reingedrückt, bis er ganz drin ist.",
+          "question": "Warum nimmt man für diesen Schritt eine Presse, und in welchem Tempo soll sie arbeiten? Was würde mit dem Boden im Zylinder passieren, wenn man ihn stattdessen einschlägt?",
+          "nudge": "Lies die Bildunterschrift zu Schritt 2 und achte darauf, wo die Oberkante des Zylinders am Ende steht."
+        },
+        {
+          "category": "fachsprache",
+          "quote": "der Ring auf den Boden gestellt",
+          "question": "Wie heißt dieses Gerät fachlich, und welche Seite muss beim Aufsetzen nach unten zeigen?",
+          "nudge": "Sieh dir den Zylinder in Schritt 1 von der Seite an und vergleiche mit Legende und Glossar."
+        },
+        {
+          "category": "ablauf",
+          "quote": "weil man da sonst nicht hinkommt",
+          "question": "Der Zylinder ist 5 cm hoch: Aus welcher Tiefe würde er Boden entnehmen, wenn man ihn ohne Grube auf die Oberfläche setzt? Was wird die Grube damit für den Zylinder?",
+          "nudge": "Wähle oben links nacheinander die drei Schichten und vergleiche, wo der Zylinder jeweils aufgesetzt wird."
+        },
+        {
+          "category": "fehlerquellen",
+          "quote": "Zum Schluss kommen Deckel drauf.",
+          "question": "Was passiert vor dem Verschließen noch mit dem überstehenden Boden, und was soll der Deckel bis zur ersten Wägung im Labor verhindern?",
+          "nudge": "Schau dir Schritt 7 genau an und überlege, welche Größe im Labor als Erstes gemessen wird."
+        }
+      ]
+    }
+  }
+}

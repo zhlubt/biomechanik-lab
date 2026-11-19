@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KSAT: gesättigte Wasserleitfähigkeit</title>
+<link rel="stylesheet" href="anim.css?v=20261117">
+</head>
+<body>
+<div class="page">
+  <div class="viewer">
+    <div id="ksat3" role="img" aria-label="3D-Modell eines Permeameters mit fallender Druckhöhe: Explosionsansicht, Zusammenbau, Schnittansicht und Messung, bei der Wasser von unten nach oben durch die Bodenprobe strömt"></div>
+    <div id="klabels"></div>
+    <div class="vtop">
+      <div class="seg" id="ksoils" role="group" aria-label="Boden wählen"></div>
+      <div class="seg"><button id="kplay" aria-pressed="false">Pause</button><button id="kspeed" title="Geschwindigkeit">1×</button></div>
+    </div>
+    <div class="hud" id="khud" hidden>
+      <div class="row"><span>Wassersäule H</span><b id="kH">20,00 cm</b></div>
+      <div class="row"><span>verstrichene Zeit</span><b id="kT">0:00:00</b></div>
+      <div class="row"><span>Zeitraffer</span><b id="kX">×1</b></div>
+      <div class="row"><span>durchgesickert V</span><b id="kV">0 cm³</b></div>
+      <svg viewBox="0 0 200 84" aria-hidden="true"><line class="ax" x1="32" y1="70" x2="196" y2="70"/><line class="ax" x1="32" y1="6" x2="32" y2="70"/><text x="0" y="10">20 cm</text><text x="22" y="72">0</text><text x="114" y="82" text-anchor="middle">Zeit</text><text id="kXend" x="196" y="82" text-anchor="end"></text><path class="hl" id="kcurve" d=""/></svg>
+      <div class="row ks"><span>Ks</span><b id="kK">–</b></div>
+    </div>
+    <div class="vhint">Ziehen zum Drehen · Mausrad zum Zoomen</div>
+  </div>
+  <div class="vcap"><div class="vcaphead"><div class="meta" id="kcapMeta"></div><button class="capbtn" aria-expanded="true">Text ausblenden</button></div><div class="capbody"><h3 id="kcapTitle"></h3><p id="kcapText"></p></div></div>
+  <div class="vctl">
+    <div class="steps" id="ksteps" role="group" aria-label="Arbeitsschritte" style="grid-template-columns:repeat(5,minmax(0,1fr))"></div>
+    <input type="range" id="kscrub" min="0" max="100" step="0.01" value="0" aria-label="Zeitleiste der Animation">
+  </div>
+  <div class="kside">
+    <figure class="kfig">
+      <svg id="kchart" viewBox="0 0 440 300" role="img" aria-label="Hydraulische Leitfähigkeit K logarithmisch über der Druckhöhe h für drei Böden"></svg>
+      <div class="legend" id="klegend"></div>
+      <figcaption>Nachgezeichnet nach dem Leitfähigkeitsdiagramm in METER Group, „How to measure hydraulic conductivity: which method is right for you?“. Die Kurven sind qualitativ, die Werte Beispiele. Ein Klick auf eine Kurve wählt den Boden auch in der 3D-Messung.</figcaption>
+    </figure>
+    <div class="fx">
+      <h3>Fallhöhenmethode, wie in der Animation</h3>
+      <code>Ks = (a · L) / (A · t) · ln(H₀ / H)</code>
+      <p>a Querschnitt der Bürette (in der Animation 4,5 cm²), L = 5 cm Probenhöhe, A = 50,3 cm² Probenquerschnitt (Ø 8 cm), H₀ = 20 cm Wassersäule zu Beginn, H Wassersäule zum Zeitpunkt t.</p>
+      <p>Zum Vergleich, mit konstanter Druckhöhe: Ks = (L · V) / (H · A · t).</p>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="js/k-chart.js?v=20261117"></script>
+<script src="js/ksat-3d.js?v=20261117"></script>
+<script src="js/frame.js?v=20261117"></script>
+</body>
+</html>

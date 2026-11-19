@@ -1,62 +1,97 @@
 <?php
 /**
- * Legt eine neue Übung (Szenario) an — inkl. optionalem Video-Upload.
- * Nur mit gültiger Pflege-Anmeldung. Danach Weiterleitung in den Editor.
+ * Legt eine neue Übung an. Nimmt die komplette Übung als JSON (Feld
+ * `exercise_json`, Dateiformat wie in private/content) plus optionale Dateien
+ * (`media_file`, `thumb_file`) entgegen und antwortet mit JSON.
+ *
+ * Mit `dry_run=1` wird nur geprüft und die gesäuberte Übung zurückgegeben, ohne
+ * etwas zu schreiben (Knopf „Prüfen“ und „JSON ansehen“ im Formular).
+ *
+ * Nur mit gültiger Pflege-Anmeldung. Alle Felder laufen durch
+ * normalize_exercise() (Erlaubnisliste, siehe private/lib/exercise.php).
  */
 require __DIR__ . '/_boot.php';
 app_session_start();
+header('Content-Type: application/json; charset=utf-8');
 
-if (empty($_SESSION['pflege_auth'])) { http_response_code(403); exit('Nicht angemeldet.'); }
-csrf_require(false);
+function out(int $code, array $body): void {
+    http_response_code($code);
+    echo json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
 
-function back_err(string $msg): void { $_SESSION['create_error'] = $msg; header('Location: pflege.php?neu=1'); exit; }
+if (empty($_SESSION['pflege_auth'])) out(403, ['errors' => ['Nicht angemeldet. Bitte in der Pflege neu anmelden.']]);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') out(405, ['errors' => ['Nur POST.']]);
+csrf_require();
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: pflege.php?neu=1'); exit; }
+$in = json_decode((string)($_POST['exercise_json'] ?? ''), true);
+if (!is_array($in)) out(400, ['errors' => ['Die Übungsdaten sind kein gültiges JSON.']]);
 
-$slug = function ($s) { return preg_replace('/[^a-z0-9_-]/', '', strtolower(trim((string)$s))); };
-$course = $slug($_POST['course'] ?? '');
-$lesson = $slug($_POST['lesson'] ?? '');
-$exercise = $slug($_POST['exercise'] ?? '');
-if (!$course || !$lesson || !$exercise) back_err('Kurs-, Lektions- und Übungs-ID nötig (nur a–z, 0–9, -, _).');
+$loc = [
+    'course'   => ex_slug($in['course']['id'] ?? ''),
+    'lesson'   => ex_slug($in['lesson']['id'] ?? ''),
+    'exercise' => ex_slug($in['id'] ?? ''),
+];
+$errors = [];
+if (!$loc['course'] || !$loc['lesson'] || !$loc['exercise']) {
+    $errors[] = 'Bereichs-, Lektions- und Übungs-ID sind nötig (nur a–z, 0–9, Bindestrich, Unterstrich).';
+}
+$dryRun = !empty($_POST['dry_run']);
+if (!$errors && exercise_exists($loc)) {
+    $errors[] = 'Unter ' . implode('/', $loc) . ' gibt es schon eine Übung. Bitte eine andere Übungs-ID wählen.';
+}
 
-$loc = ['course' => $course, 'lesson' => $lesson, 'exercise' => $exercise];
-if (exercise_exists($loc)) back_err('Eine Übung mit dieser Adresse existiert bereits.');
-
-$kind = (($_POST['kind'] ?? 'video') === 'video') ? 'video' : 'jumpforce';
-$videoSrc = '';
-if ($kind === 'video') {
-    if (!empty($_FILES['video']['tmp_name']) && is_uploaded_file($_FILES['video']['tmp_name'])) {
-        $ext = strtolower(pathinfo($_FILES['video']['name'], PATHINFO_EXTENSION));
-        if (!in_array($ext, ['mp4', 'mov', 'm4v', 'webm'], true)) back_err('Video-Format nicht unterstützt (mp4/mov/m4v/webm).');
-        $viddir = __DIR__ . '/vid';
-        if (!is_dir($viddir)) @mkdir($viddir, 0775, true);
-        $fname = $exercise . '.' . $ext;
-        if (!move_uploaded_file($_FILES['video']['tmp_name'], $viddir . '/' . $fname)) back_err('Video konnte nicht gespeichert werden (Schreibrechte auf vid/?).');
-        $videoSrc = 'vid/' . $fname;
-    } elseif (!empty($_POST['videoSrc'])) {
-        $videoSrc = trim((string)$_POST['videoSrc']);
+// Hochgeladene Dateien: erst prüfen (mit Platzhalterpfad), gespeichert wird erst,
+// wenn die Übung insgesamt gültig ist. So bleiben bei Fehlern keine Waisen liegen.
+$publicDir = __DIR__;
+$kind = (string)($in['media'][0]['type'] ?? '');
+$mediaUpload = (!empty($_FILES['media_file']['name'])) ? $_FILES['media_file'] : null;
+$thumbUpload = (!empty($_FILES['thumb_file']['name'])) ? $_FILES['thumb_file'] : null;
+$uploadRules = [
+    'video'   => ['dir' => 'vid',   'ext' => ['mp4', 'webm', 'm4v', 'mov'], 'placeholder' => 'vid/upload.mp4'],
+    'image'   => ['dir' => 'img',   'ext' => ['png', 'jpg', 'jpeg', 'webp', 'gif'], 'placeholder' => 'img/upload.png'],
+    'model3d' => ['dir' => 'model', 'ext' => ['glb'], 'placeholder' => 'model/upload.glb'],
+];
+if ($mediaUpload) {
+    if (!isset($uploadRules[$kind])) {
+        $errors[] = 'Für diesen Medientyp lässt sich keine Datei hochladen.';
     } else {
-        back_err('Bitte ein Video hochladen oder einen Video-Pfad (z. B. vid/datei.mp4) angeben.');
+        $in['media'][0]['src'] = $uploadRules[$kind]['placeholder'];
+        $tmp = (string)($mediaUpload['tmp_name'] ?? '');
+        if ($kind === 'image' && $tmp !== '' && @getimagesize($tmp) === false) $errors[] = 'Die Bilddatei ist kein gültiges Bild.';
+        if ($kind === 'model3d' && $tmp !== '' && (string)@file_get_contents($tmp, false, null, 0, 4) !== 'glTF') $errors[] = 'Die 3D-Datei ist kein gültiges .glb (Binär-glTF).';
     }
 }
-
-// Kategorien: je Zeile "schlüssel | Label | #farbe"
-$cats = [];
-foreach (preg_split('/\r?\n/', (string)($_POST['categories'] ?? '')) as $line) {
-    $line = trim($line); if ($line === '') continue;
-    $p = array_map('trim', explode('|', $line));
-    if (($p[0] ?? '') !== '') $cats[] = ['key' => $p[0], 'label' => $p[1] ?? $p[0], 'color' => $p[2] ?? '#3a63d8'];
+if ($thumbUpload) {
+    $in['thumbnail'] = 'img/upload.png';
+    $tmp = (string)($thumbUpload['tmp_name'] ?? '');
+    if ($tmp !== '' && @getimagesize($tmp) === false) $errors[] = 'Das Vorschaubild ist kein gültiges Bild.';
 }
 
-$skel = build_exercise_skeleton([
-    'course' => $course, 'courseTitle' => $_POST['courseTitle'] ?? '', 'lesson' => $lesson, 'lessonTitle' => $_POST['lessonTitle'] ?? '',
-    'exercise' => $exercise, 'number' => $_POST['number'] ?? '', 'title' => $_POST['title'] ?? '', 'intro' => $_POST['intro'] ?? '',
-    'kind' => $kind, 'videoSrc' => $videoSrc, 'durationSec' => $_POST['durationSec'] ?? 5, 'fps' => $_POST['fps'] ?? 30,
-    'timestampMode' => !empty($_POST['timestampMode']), 'task' => $_POST['task'] ?? '',
-    'mediaDescription' => $_POST['mediaDescription'] ?? '', 'feedbackPrompt' => $_POST['feedbackPrompt'] ?? '', 'modelSolution' => $_POST['modelSolution'] ?? '',
-    'demoText' => $_POST['demoText'] ?? '', 'categories' => $cats,
-    'targetConcepts' => array_map('trim', explode(',', (string)($_POST['targetConcepts'] ?? ''))),
-]);
+[$ex, $schemaErrors] = normalize_exercise($in, $loc ?: ['course' => '', 'lesson' => '', 'exercise' => ''], $publicDir);
+$errors = array_merge($errors, $schemaErrors);
 
-if (!create_exercise($loc, $skel)) back_err('Anlegen fehlgeschlagen (Schreibrechte im content-Verzeichnis?).');
-header('Location: pflege.php?ex=' . urlencode($course . '/' . $lesson . '/' . $exercise));
+if ($dryRun) {
+    // Platzhalter nicht als echten Pfad zurückgeben.
+    if ($mediaUpload && isset($ex['media'][0]['src'])) $ex['media'][0]['src'] = '(wird beim Anlegen hochgeladen)';
+    if ($thumbUpload) $ex['thumbnail'] = '(wird beim Anlegen hochgeladen)';
+    out($errors ? 422 : 200, ['ok' => !$errors, 'errors' => $errors, 'exercise' => $ex]);
+}
+if ($errors) out(422, ['errors' => $errors]);
+
+try {
+    if ($mediaUpload) {
+        $r = $uploadRules[$kind];
+        $ex['media'][0]['src'] = store_upload($mediaUpload, $publicDir, $r['dir'], $loc['exercise'], $r['ext']);
+    }
+    if ($thumbUpload) {
+        $ex['thumbnail'] = store_upload($thumbUpload, $publicDir, 'img', 'thumb_' . $loc['exercise'], ['png', 'jpg', 'jpeg', 'webp', 'gif']);
+    }
+} catch (RuntimeException $e) {
+    out(422, ['errors' => [$e->getMessage()]]);
+}
+
+if (!create_exercise($loc, $ex)) out(500, ['errors' => ['Anlegen fehlgeschlagen (Schreibrechte im content-Verzeichnis?).']]);
+
+$id = implode('/', $loc);
+out(200, ['ok' => true, 'id' => $id, 'edit' => 'pflege.php?ex=' . rawurlencode($id), 'view' => 'uebung.php?ex=' . rawurlencode($id)]);

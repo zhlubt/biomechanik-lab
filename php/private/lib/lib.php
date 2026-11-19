@@ -10,6 +10,7 @@ require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/llm.php';
+require_once __DIR__ . '/exercise.php';
 
 /** Pfad-Segment säubern (kein ../). */
 function ex_safe(string $s): string {
@@ -71,7 +72,11 @@ function list_courses(): array {
             $out[$cId]['lessons'][$lId] = ['id' => $lId, 'title' => $ex['lesson']['title'] ?? $lId, 'items' => []];
         }
         $out[$cId]['lessons'][$lId]['items'][] = ['loc' => $loc, 'ex' => $ex];
+        // Optionale Reihenfolge je Bereich: course.order in der Übungs-JSON (Default 0).
+        // Ohne Angabe bleibt die alphabetische Verzeichnisreihenfolge.
+        if (isset($ex['course']['order'])) $out[$cId]['order'] = max($out[$cId]['order'] ?? 0, (int)$ex['course']['order']);
     }
+    uasort($out, fn($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));  // stabil seit PHP 8
     return $out;
 }
 
@@ -300,8 +305,15 @@ function create_exercise(array $loc, array $data): bool {
     if (file_exists($f)) return false;
     $dir = dirname($f);
     if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) return false;
+    // Rechte ausdruecklich setzen (umask 022 macht sonst 755/644): Der SFTP-User des
+    // Deploys ist nur ueber die Gruppe beteiligt und muss lesen (Inhalts-Abgleich) und
+    // spaeter in diese Ordner schreiben koennen.
+    @chmod($dir, 0775);
+    @chmod(dirname($dir), 0775);
     $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    return file_put_contents($f, $json . "\n") !== false;
+    if (file_put_contents($f, $json . "\n") === false) return false;
+    @chmod($f, 0664);
+    return true;
 }
 
 /** Baut ein vollständiges Übungs-Skelett (datengetrieben renderbar). */
@@ -377,6 +389,16 @@ function build_exercise_skeleton(array $in): array {
  * Liefert ein Array mit title/intro/task/mediaDescription/feedbackPrompt/
  * modelSolution/targetConcepts/categories. Wirft RuntimeException bei Fehlern.
  */
+/** Modell fuer den Bildentwurf (muss Bilder lesen koennen). */
+function draft_model(): ?string {
+    $m = app_env('DRAFT_MODEL');
+    if ($m) return $m;
+    $p = llm_active_provider(app_env('DRAFT_PROVIDER') ?: null);
+    if ($p === 'nhr') return 'Qwen/Qwen3.6-35B-A3B-FP8';
+    if ($p === 'anthropic') return 'claude-opus-5-5';
+    return null;
+}
+
 function llm_exercise_draft(string $mime, string $b64, string $hint = ''): array {
     $schema = [
         'type' => 'object', 'additionalProperties' => false,
@@ -398,7 +420,7 @@ function llm_exercise_draft(string $mime, string $b64, string $hint = ''): array
     ];
 
     $system = implode("\n", [
-        'Du hilfst beim Erstellen von Übungen für ein biomechanisches "Beschreibungs-Lab" der Sportwissenschaft (Uni Bayreuth).',
+        'Du hilfst beim Erstellen von Übungen für das "Beschreibungs-Lab" der Universität Bayreuth (Fächer z. B. Biomechanik, Leichtathletik, Zerspanungstechnik, Geoökologie).',
         'Didaktik: Studierende beschreiben ein Medium (Bild/Diagramm/Video/3D-Modell) in eigenen Worten; die KI gibt SOKRATISCHES Feedback — Fragen und Hinweise, NIEMALS fertige Lösungen.',
         'Du bekommst ein Bild des Mediums und entwirfst daraus eine vollständige Übung auf Deutsch (Sie-/Du-Form wie in den Feldern üblich: Du).',
         'Regeln für die Felder:',
@@ -420,7 +442,12 @@ function llm_exercise_draft(string $mime, string $b64, string $hint = ''): array
             ['type' => 'text', 'text' => $userText],
         ],
         'schema' => $schema,
-        'max_tokens' => 3000,
+        'max_tokens' => 16000,  // Denkspur (Qwen, Claude Opus 5.5) zaehlt mit; zu knapp = abgeschnittenes JSON
+        // Eigenes Modell fuer den Bildentwurf: das Feedback-Modell (gpt-oss) liest keine Bilder.
+        // Default auf dem NHR-Gateway: Qwen 3.6 (Vision). Umstellbar ueber DRAFT_PROVIDER / DRAFT_MODEL.
+        'provider' => app_env('DRAFT_PROVIDER') ?: null,
+        'model'    => draft_model(),
+        'timeout'  => 150,
     ]);
     // Kategorien-Schlüssel säubern.
     if (!empty($draft['categories']) && is_array($draft['categories'])) {

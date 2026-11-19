@@ -56,6 +56,31 @@ PY
   exit 0
 fi
 
+# --- Inhalts-Schutz: Uebungen entstehen auch auf dem Server (Pflege > Neue Uebung) ---
+# Vor jedem Upload wird der Server-Stand von private/content geholt und mit dem
+# lokalen Stand und dem Manifest des letzten Deploys verglichen
+# (scripts/content-sync.py). Auf dem Server geaenderte Dateien werden nicht
+# ueberschrieben: das Skript bricht ab und verweist auf --pull.
+#   --pull           Server-Stand nach lokal holen (danach git diff pruefen)
+#   --force-content  trotz Konflikt die lokale Fassung hochladen
+MANIFEST=".deploy-state/content.sha256"
+fetch_server_content() {
+  printf 'get -r private/content %s/srv\n' "$TMP" > "$BATCH"
+  run_batch "$BATCH" >/dev/null 2>&1 || true
+  [ -d "$TMP/srv" ] || { echo "✗ Server-Inhalte (private/content) konnten nicht geholt werden."; exit 1; }
+}
+
+if [ "${1:-}" = "--pull" ]; then
+  fetch_server_content
+  /usr/bin/python3 scripts/content-sync.py pull "$TMP/srv" php/private/content "$MANIFEST"
+  exit $?
+fi
+
+FORCE_CONTENT=0
+[ "${1:-}" = "--force-content" ] && FORCE_CONTENT=1
+fetch_server_content
+/usr/bin/python3 scripts/content-sync.py check "$TMP/srv" php/private/content "$MANIFEST" "$FORCE_CONTENT" || exit 1
+
 echo "▸ PHP-Deploy → ${U}@${HOST}:${PORT}  (Passwort verborgen)"
 
 {
@@ -66,6 +91,7 @@ echo "▸ PHP-Deploy → ${U}@${HOST}:${PORT}  (Passwort verborgen)"
   echo "-mkdir private/data"
   echo "-mkdir public/img"
   echo "-mkdir public/vid"
+  echo "-mkdir public/model"
 
   for f in php/public/*.php php/public/*.js php/public/*.css; do
     [ -e "$f" ] && echo "put $f public/$(basename "$f")"
@@ -75,8 +101,20 @@ echo "▸ PHP-Deploy → ${U}@${HOST}:${PORT}  (Passwort verborgen)"
     [ -f "$f" ] && echo "put $f public/$(echo "$f" | sed 's|^php/public/||')"
   done
 
+  # Animationsseiten (Medientyp "frame"): ganzer Baum unter public/anim/, lesbar fuer den Web-User.
+  if [ -d php/public/anim ]; then
+    find php/public/anim -type d | sed 's|^php/public/|-mkdir public/|'
+    find php/public/anim -type f ! -name '.DS_Store' | while read -r f; do
+      echo "put $f public/${f#php/public/}"
+    done
+    find php/public/anim -type d | sed 's|^php/public/|chmod 755 public/|'
+    find php/public/anim -type f ! -name '.DS_Store' | sed 's|^php/public/|chmod 644 public/|'
+  fi
+
   for f in php/private/lib/*.php; do echo "put $f private/lib/$(basename "$f")"; done
   echo "put php/private/config.php private/config.php"
+  # Anleitung fuer die KI-gestuetzte Uebungsentwicklung (Pflege > Neue Uebung).
+  [ -f php/private/llm-anleitung.md ] && { echo "put php/private/llm-anleitung.md private/llm-anleitung.md"; echo "chmod 644 private/llm-anleitung.md"; }
 
   # Inhalte: Verzeichnisbaum nachziehen und Rechte setzen.
   find php/private/content -mindepth 1 -type d | sed 's|^php/private/content|-mkdir private/content|'
@@ -84,7 +122,8 @@ echo "▸ PHP-Deploy → ${U}@${HOST}:${PORT}  (Passwort verborgen)"
     echo "put $f private/content/${f#php/private/content/}"
   done
 
-  echo "chmod 775 public/img public/vid private/data"
+  # Schreibbar fuer den Web-User: Uploads aus „Neue Uebung“ (Bild, Video, 3D) und die Datenbank.
+  echo "chmod 775 public/img public/vid public/model private/data"
   echo "chmod 755 private/content"
   find php/private/content -mindepth 1 -type d | sed 's|^php/private/content|chmod 755 private/content|'
   find php/private/content -name '*.json' | while read -r f; do
@@ -95,5 +134,6 @@ echo "▸ PHP-Deploy → ${U}@${HOST}:${PORT}  (Passwort verborgen)"
 run_batch "$BATCH" | grep -vE "^(spawn |.*password:)" || true
 
 echo "✓ Upload fertig ($(grep -c '^put' "$BATCH") Dateien)."
+/usr/bin/python3 scripts/content-sync.py record "$TMP/srv" php/private/content "$MANIFEST"
 echo "  private/.env blieb unberuehrt — aendern mit: $0 --env-merge NHR_MODEL=…"
 echo "  Test: https://biomechanik.zhl-ubt.de/  und  /pflege.php"

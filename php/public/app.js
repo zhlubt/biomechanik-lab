@@ -230,7 +230,7 @@
   }
 
   var transport = (MEDIA.kind === "video") ? makeVideoTransport()
-    : (MEDIA.kind === "model3d" || MEDIA.kind === "image") ? makeNullTransport()
+    : (MEDIA.kind === "model3d" || MEDIA.kind === "image" || MEDIA.kind === "frame") ? makeNullTransport()
     : makeJumpTransport();
   updateUI(transport);
 

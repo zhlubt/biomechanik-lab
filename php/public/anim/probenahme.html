@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ungestörte Bodenprobe mit der Hydraulikpresse</title>
+<link rel="stylesheet" href="anim.css?v=20261117">
+</head>
+<body>
+<div class="page">
+  <div class="viewer">
+    <div id="three" role="img" aria-label="3D-Animation: Eine Hydraulikpresse drückt einen Stechzylinder in den Boden, der Zylinder wird freigegraben, eine Platte wird untergeschoben und die Probe herausgehoben, in drei Tiefen"></div>
+    <div class="vtop">
+      <div class="seg" id="layers" role="group" aria-label="Schicht wählen"></div>
+      <div class="seg"><button id="play" aria-pressed="false">Pause</button><button id="speed" title="Geschwindigkeit">1×</button></div>
+    </div>
+    <div class="vhint">Ziehen zum Drehen · Mausrad zum Zoomen</div>
+  </div>
+  <div class="vcap"><div class="vcaphead"><div class="meta" id="capMeta"></div><button class="capbtn" aria-expanded="true">Text ausblenden</button></div><div class="capbody"><h3 id="capTitle"></h3><p id="capText"></p></div></div>
+  <div class="vctl">
+    <div class="steps" id="steps" role="group" aria-label="Arbeitsschritte"></div>
+    <input type="range" id="scrub" min="0" max="100" step="0.01" value="0" aria-label="Zeitleiste der Animation">
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="js/probenahme-3d.js?v=20261117"></script>
+<script src="js/frame.js?v=20261117"></script>
+</body>
+</html>

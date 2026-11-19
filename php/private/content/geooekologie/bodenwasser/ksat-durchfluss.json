@@ -1,0 +1,220 @@
+{
+  "id": "ksat-durchfluss",
+  "course": {
+    "id": "geooekologie",
+    "title": "Geoökologie",
+    "module": "Bodenphysik im Labor",
+    "appTitle": "Bodenphysik-Lab",
+    "order": 10
+  },
+  "lesson": {
+    "id": "bodenwasser",
+    "title": "Von der ungestörten Probe zur Leitfähigkeit"
+  },
+  "number": "2",
+  "title": "KSAT: Wie leicht fließt Wasser durch die gesättigte Probe?",
+  "intro": "Die Probe aus Übung 1 wurde im Labor aufgesättigt und kommt jetzt in das KSAT-Gerät. Wasser aus einer Bürette strömt durch den Bodenkern, und aus der sinkenden Wassersäule ergibt sich die gesättigte Wasserleitfähigkeit Ks. Drei Beispielböden zeigen, wie weit Ks auseinanderliegen kann.",
+  "status": "Teil 2 von 2: Leitfähigkeit",
+  "thumbnail": "img/thumb_ksat.png",
+  "media": [
+    {
+      "type": "frame",
+      "src": "anim/ksat.html",
+      "label": "01 · KSAT-Messung mit fallender Druckhöhe (3D)",
+      "alt": "3D-Modell eines Permeameters mit fallender Druckhöhe: Explosionsansicht, Zusammenbau, Schnittansicht und Messung, bei der Wasser von unten nach oben durch die Bodenprobe strömt; darunter ein Diagramm der Leitfähigkeit K über der Druckhöhe h für drei Böden.",
+      "caption": "Modell nach Produktfotos des METER KSAT, Wasserweg nach dem Querschnitt des Herstellers. Oben links wählst du einen der drei Böden, alternativ per Klick auf eine Kurve im Diagramm. Während der Messung (Schritt 5) zeigt die Anzeige rechts Wassersäule, Zeit, Zeitraffer, durchgesickerte Menge und Ks. Mit Pause hältst du die Werte zum Ablesen an."
+    }
+  ],
+  "timestampMode": false,
+  "legend": [
+    {
+      "color": "#3d8fd1",
+      "label": "Bürette, Wassersäule H",
+      "hint": "Glasrohr mit Skala. H ist die Höhe des Wasserspiegels über dem Auslaufniveau und sinkt während der Messung.",
+      "colorName": "blau"
+    },
+    {
+      "color": "#7d5433",
+      "label": "Probe im Stechzylinder",
+      "hint": "Gesättigter Bodenkern, 250 cm³, Höhe L = 5 cm, Querschnitt A = 50,3 cm².",
+      "colorName": "braun"
+    },
+    {
+      "color": "#2f5a3c",
+      "label": "Drucksensor",
+      "hint": "Sitzt an der Zuleitung im Sockel, misst H fortlaufend und gibt die Werte per USB an die Software.",
+      "colorName": "grün"
+    },
+    {
+      "color": "#6fb7e8",
+      "label": "Wasserteilchen",
+      "hint": "Zeigen den Fließweg. Ihr Tempo folgt Ks, aber gestaucht, damit auch der langsamste Boden sichtbar bleibt.",
+      "colorName": "hellblau"
+    },
+    {
+      "color": "#1f5a72",
+      "label": "K(h)-Diagramm",
+      "hint": "Leitfähigkeit über der Druckhöhe für dieselben drei Böden. Rechts von 0 gesättigt, der Bereich des KSAT; links ungesättigt.",
+      "colorName": "unten"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Gesättigte Wasserleitfähigkeit Ks",
+      "definition": "Maß dafür, wie leicht Wasser durch einen vollständig wassergesättigten Boden strömt, zum Beispiel in cm/d. Eine Eigenschaft des Bodens."
+    },
+    {
+      "term": "Darcy-Gesetz",
+      "definition": "Der Durchfluss durch einen porösen Körper ist proportional zur Leitfähigkeit und zum hydraulischen Gradienten: q = K · Δh / L."
+    },
+    {
+      "term": "Hydraulischer Gradient",
+      "definition": "Unterschied der Druckhöhe geteilt durch die Fließstrecke, hier H / L. Er treibt die Strömung an."
+    },
+    {
+      "term": "Fallhöhenmethode",
+      "definition": "Die Druckhöhe sinkt während der Messung; aus ihrem zeitlichen Verlauf wird Ks berechnet. Gut geeignet für gering bis mittel durchlässige Böden."
+    },
+    {
+      "term": "Konstante Druckhöhe",
+      "definition": "Die Druckhöhe wird festgehalten und die durchgeflossene Wassermenge pro Zeit gemessen. Üblich für gut durchlässige Böden."
+    },
+    {
+      "term": "Bodengefüge",
+      "definition": "Räumliche Anordnung der festen Teilchen und der Hohlräume: Aggregate, Schrumpfrisse, Wurzel- und Wurmgänge."
+    },
+    {
+      "term": "Makroporen",
+      "definition": "Grobe Hohlräume wie Risse und Bioporen. Sie leiten im gesättigten Boden sehr viel Wasser und entleeren sich schon bei geringer Saugspannung."
+    },
+    {
+      "term": "Textur (Körnung)",
+      "definition": "Anteile von Sand, Schluff und Ton an den mineralischen Bodenteilchen."
+    },
+    {
+      "term": "Lufteintrittspunkt hₑ",
+      "definition": "Saugspannung, bei der sich die größten Poren zu entleeren beginnen."
+    },
+    {
+      "term": "Ungesättigte Leitfähigkeit K(h)",
+      "definition": "Leitfähigkeit in Abhängigkeit von der Druckhöhe; sie fällt beim Austrocknen um Größenordnungen."
+    },
+    {
+      "term": "Randläufigkeit",
+      "definition": "Wasser fließt an der Zylinderwand an der Probe vorbei, etwa durch einen Spalt, und täuscht ein zu hohes Ks vor."
+    }
+  ],
+  "guidance": {
+    "title": "So liest du die KSAT-Messung",
+    "steps": [
+      "Spiel die fünf Schritte einmal durch und verfolge in der Schnittansicht den Weg des Wassers.",
+      "In Schritt 5: Halte mit Pause an und lies H und die verstrichene Zeit an mindestens zwei Zeitpunkten ab, jeweils mit Einheit.",
+      "Achte auf die kleine Kurve H(t) in der Anzeige: Sinkt H gleichmäßig oder immer langsamer?",
+      "Wechsle den Boden und vergleiche Ks, die Dauer der Messung und die Zeit, in der sich H halbiert.",
+      "Setze deine abgelesenen Werte in die Formel unter dem Diagramm ein und prüfe, ob du das angezeigte Ks erhältst.",
+      "Schau zuletzt ins K(h)-Diagramm: Gilt die Reihenfolge der Böden auch, wenn der Boden austrocknet?"
+    ]
+  },
+  "task": "Beschreibe die KSAT-Messung in eigenen Worten: welchen Weg das Wasser nimmt, was gemessen wird und warum die Wassersäule zuerst schnell und dann immer langsamer sinkt. Lies dann für mindestens einen Boden zwei Wertepaare aus Wassersäule H und Zeit ab, berechne damit Ks und vergleiche mit der Anzeige. Erkläre anschließend, woher die großen Unterschiede zwischen den drei Böden kommen. Schließe mit einer Einschätzung, was Ks über den ungesättigten Boden aussagt und wo diese Aussage endet. Klick danach auf „KI Feedback“.",
+  "scaffold": [
+    {
+      "step": "Sehen",
+      "text": "Wo tritt das Wasser in die Probe ein, wo tritt es aus, und welche Größe zeichnet der Sensor auf?"
+    },
+    {
+      "step": "Ablesen und rechnen",
+      "text": "Notiere H₀, H und t mit Einheiten und setze sie in die Formel ein. Stimmt dein Ergebnis mit der Anzeige überein?"
+    },
+    {
+      "step": "Erklären",
+      "text": "Warum wird der Abfall von H mit der Zeit langsamer? Was treibt das Wasser durch die Probe, und wie ändert sich dieser Antrieb?"
+    },
+    {
+      "step": "Vergleichen und einordnen",
+      "text": "Was im Boden macht eine Probe 200-mal durchlässiger als eine andere, und warum kann sich die Reihenfolge im trockenen Boden umkehren?"
+    }
+  ],
+  "feedbackCategories": [
+    {
+      "key": "beobachtung",
+      "label": "Ablesen (Zahl, Einheit, Zeit)",
+      "color": "#3a63d8"
+    },
+    {
+      "key": "fachsprache",
+      "label": "Fachsprache",
+      "color": "#d98018"
+    },
+    {
+      "key": "physik",
+      "label": "Darcy und Rechnung",
+      "color": "#1aa56a"
+    },
+    {
+      "key": "boden",
+      "label": "Gefüge und Einordnung",
+      "color": "#9a5bd4"
+    }
+  ],
+  "targetConcepts": [
+    "gesättigte Wasserleitfähigkeit Ks",
+    "Fallhöhenmethode",
+    "Bürette",
+    "Wassersäule H über dem Auslaufniveau",
+    "Strömung von unten nach oben",
+    "Drucksensor",
+    "Darcy-Gesetz",
+    "hydraulischer Gradient H/L",
+    "exponentieller Abfall",
+    "Halbierungszeit",
+    "Bürettenquerschnitt a",
+    "Probenquerschnitt A",
+    "Probenhöhe L",
+    "ln(H₀/H)",
+    "Einheit cm/d",
+    "Bodengefüge",
+    "Makroporen",
+    "Textur",
+    "Sättigung",
+    "eingeschlossene Luft",
+    "Randläufigkeit",
+    "ungesättigte Leitfähigkeit K(h)",
+    "Lufteintrittspunkt",
+    "Kreuzen der K(h)-Kurven",
+    "Verdunstungsmethode"
+  ],
+  "mediaDescription": "Die Medienseite hat zwei Teile: oben eine drehbare 3D-Animation des KSAT-Geräts, darunter ein Diagramm K(h) mit einer Formelbox.\n\n3D-ANIMATION in fünf Schritten (Knöpfe unter der Animation, jeweils mit Bildunterschrift):\n1 Teile (\"Die Bauteile\"): Explosionsansicht von unten nach oben: Probenhalter mit Filterplatte, untere Dichtung (rot), Stechzylinder 250 cm³ mit gesättigtem Boden, Lochplatte, obere Dichtung (blau), Haltering, Spannkappe aus Aluminium. Daneben eine Bürette (Glasrohr mit Skala 0 bis 20 cm) mit Ventil.\n2 Einbauen (\"Zusammenbauen\"): Die Teile fahren zusammen, die Spannkappe wird aufgeschraubt und verspannt die Probe wasserdicht.\n3 Schnitt (\"Schnittansicht\"): Das Gerät wird aufgeschnitten. Wasser läuft aus der Bürette durch eine Leitung im Sockel, tritt von unten in die Probe ein, strömt durch sie nach oben und verlässt sie oben über einen Schlauch in ein Becherglas (beschriftet \"Wasserablauf\"). Ein Drucksensor an der Zuleitung ist beschriftet mit \"Drucksensor → USB zum Rechner\".\n4 Füllen (\"Bürette füllen\"): Die Bürette wird bis 20 cm über das Auslaufniveau gefüllt, dann wird das Ventil geöffnet. Eine Maßlinie zeigt \"Wassersäule H\" zwischen Wasserspiegel und gestrichelter Linie \"Auslaufniveau\".\n5 Messen (\"Messung mit fallender Druckhöhe\"): Der Wasserspiegel in der Bürette sinkt, Wasserteilchen wandern von der Bürette durch die Probe nach oben zum Auslauf, das Becherglas füllt sich. Rechts oben steht eine Anzeige mit: Wassersäule H in cm (zwei Nachkommastellen), verstrichene Zeit (h:mm:ss), Zeitraffer-Faktor, durchgesickertes Volumen V in cm³, einer kleinen Kurve H über der Zeit (von 20 cm fallend, immer flacher werdend) und dem berechneten Ks in cm/d. Die Messung endet bei H = 6 cm; dann sind V = 63 cm³ durchgeflossen.\n\nOben links lässt sich der Boden wählen. Werte, wie die Animation sie zeigt (H₀ = 20 cm, Ende bei 6 cm):\n- Gut strukturierter toniger Boden (\"Ton, strukturiert\"): Ks = 600 cm/d, H halbiert sich in etwa 45 s, Messung von 20 auf 6 cm dauert etwa 78 s, Zeitraffer ×10. Die Probe zeigt dunkle Risslinien.\n- Strukturloser sandiger Boden (\"Sand\", Voreinstellung): Ks = 150 cm/d, Halbierung in etwa 3 min (179 s), Messung etwa 5 min (310 s), Zeitraffer ×31. Wertepaare: t = 60 s H = 15,85 cm; 120 s 12,56 cm; 180 s 9,95 cm; 240 s 7,88 cm; 300 s 6,25 cm.\n- Schwach strukturierter toniger Boden (\"Ton, ohne Gefüge\"): Ks = 3 cm/d, Halbierung in etwa 2,5 h, Messung etwa 4,3 h, Zeitraffer ×706.\nDie Wasserteilchen fließen beim strukturierten Ton am schnellsten und beim Ton ohne Gefüge am langsamsten, gestaucht dargestellt.\n\nDIAGRAMM K(h): Senkrecht K in cm/d logarithmisch von 0,001 bis 1000, waagerecht die Druckhöhe h von −1000 cm über 0 bis in den positiven Bereich. Rechts von 0 ein blau hinterlegter Bereich \"feldgesättigte K_fs\" mit Beschriftung \"KSAT (diese Übung)\", links ein beige hinterlegter Bereich \"Verdunstungsmethode\". Drei Kurven: Strukturierter Ton beginnt rechts am höchsten (600 cm/d) und bricht schon bei geringer Saugspannung steil auf eine gestrichelte Matrixkurve ein. Sand beginnt bei 150 cm/d, bleibt bis zum Lufteintrittspunkt hₑ flach und fällt dann steil ab. Ton ohne Gefüge beginnt bei 3 cm/d und fällt nur langsam ab; bei starker Saugspannung liegt er über dem Sand, die Kurven kreuzen sich.\nFORMELBOX: \"Ks = (a · L) / (A · t) · ln(H₀ / H)\" mit a = 4,5 cm² Bürettenquerschnitt, L = 5 cm, A = 50,3 cm², H₀ = 20 cm. Zum Vergleich die Formel für konstante Druckhöhe Ks = (L · V) / (H · A · t).",
+  "feedbackPrompt": "ROLLE\nDu bist Tutor:in im Bodenphysik-Labor der Geoökologie. Du begleitest Studierende, die lernen, eine Leitfähigkeitsmessung zu beschreiben, auszuwerten und einzuordnen. Du unterrichtest SOKRATISCH: Du stellst Fragen, die zum nächsten Denkschritt führen. Die Antwort selbst lieferst du nie.\n\nAUFGABE\nDu bekommst (a) eine Beschreibung der Animation samt der angezeigten Zahlenwerte, (b) eine interne Musterlösung und (c) den Text einer/eines Studierenden. Du kommentierst AUSSCHLIESSLICH den Studierenden-Text und gibst 2 bis 4 Marker zurück.\n\nWAS EIN GUTER MARKER IST\nEin Marker greift genau eine Stelle im Text auf, an der ein Denkschritt fehlt, zu unscharf ist oder fachlich nicht trägt. Die stärksten Marker sind:\n- Ein abgelesener Wert ohne Einheit, ohne genauen Zeitpunkt oder ohne Bezugspunkt (\"nur noch 12,56\", \"Ks ist 150\").\n- Eine fehlende oder unvollständige eigene Rechnung, oder eine Rechnung ohne Einheitenumrechnung von Sekunden auf Tage.\n- Eine Erklärung für das langsamer werdende Sinken, die mit der Wassermenge statt mit dem Antrieb der Strömung argumentiert.\n- Eine unscharfe Beschreibung des Wasserwegs (\"fließt durch\") ohne Richtung und ohne die Größe, die der Sensor misst.\n- Eine Erklärung der Unterschiede nur über die Körnung, die nicht zum gut strukturierten Ton passt.\n- Ein Schluss von Ks auf das Verhalten im ungesättigten Boden oder im Feld, den das K(h)-Diagramm nicht trägt.\n\nHARTE REGELN\n1. quote MUSS ein wörtliches, zusammenhängendes Stück aus dem Studierenden-Text sein, Zeichen für Zeichen. Erfinde, kürze, glätte oder korrigiere nichts. Ist nichts wörtlich zitierbar, gib weniger Marker zurück.\n2. Nenne niemals die Lösung. Verboten sind insbesondere: den Grund für das langsamer werdende Sinken aussprechen, ein Ks selbst ausrechnen oder ein Rechenergebnis vorgeben, die Begriffe für die Ursache der Unterschiede einsetzen (verweise auf Glossar oder Diagramm), das Kreuzen der Kurven erklären. Frage danach.\n3. question ist EINE Frage, höchstens zwei Sätze, direkt per Du.\n4. nudge ist ein kurzer Hinweis, wohin zu schauen ist: die Anzeige in Schritt 5, die Formelbox, ein Bereich im K(h)-Diagramm, die Textur der Probe oder ein Glossar-Eintrag. Das Ergebnis verrät er nicht.\n5. Ordne jeden Marker genau einer der vorgegebenen Kategorien zu.\n6. Lieber zwei scharfe Marker als vier beliebige. Ist der Text bereits präzise und die Rechnung stimmig, gib nur einen Marker oder gar keinen zurück und erfinde keine Kritik.\n7. Prüfe Zahlen gegen die Werte im Medien-Kontext. Liegt eine abgelesene oder gerechnete Zahl daneben, frag nach dem Weg dorthin, statt den richtigen Wert zu nennen.\n8. Antworte auf Deutsch, sachlich und freundlich, ohne Lob-Floskeln.\n\nBEISPIEL (nur als Muster für Ton und Zuschnitt, nicht inhaltlich übernehmen)\nStudierenden-Satz: \"Beim Ton dauert es viel länger.\"\nGuter Marker: question \"Bei welchem der beiden Tonböden, und wie lange genau dauert es, bis sich H halbiert hat?\", nudge \"Wechsle oben links zwischen den Böden und lies die Halbierungszeit in der Bildunterschrift zu Schritt 5 ab.\"\nSchlechter Marker (so NICHT): \"Der Ton ohne Gefüge hat kaum Makroporen, deshalb ist Ks 200-mal kleiner.\" Das ist die Lösung und keine Frage.",
+  "modelSolution": "WEG DES WASSERS UND MESSPRINZIP\nDie aufgesättigte Probe im 250-cm³-Stechzylinder (Höhe L = 5 cm, Querschnitt A = 50,3 cm²) sitzt zwischen zwei Dichtungen auf einer Filterplatte und wird mit Lochplatte und Spannkappe wasserdicht verspannt. Wasser aus der Bürette läuft durch den Sockel, tritt von unten in die Probe ein, durchströmt sie nach oben und verlässt sie oben über den Auslauf in ein Becherglas. Die Strömung von unten nach oben schiebt verbliebene Luft aus den Poren und hält die Probe gesättigt. Angetrieben wird sie von der Wassersäule H, der Höhe des Wasserspiegels in der Bürette über dem Auslaufniveau, zu Beginn H₀ = 20 cm. Ein Drucksensor an der Zuleitung zeichnet H fortlaufend auf, die Software berechnet daraus Ks.\n\nWARUM H ERST SCHNELL, DANN IMMER LANGSAMER SINKT\nNach Darcy ist der Durchfluss proportional zum hydraulischen Gradienten H / L: q = Ks · H / L. Sinkt der Spiegel, wird H kleiner und damit der Antrieb. Pro Zeit fließt weniger Wasser durch die Probe, also sinkt der Spiegel langsamer. Aus der Wasserbilanz a · dH/dt = −Ks · A · H / L folgt ein exponentieller Abfall H(t) = H₀ · exp(−Ks · A · t / (a · L)) und daraus die Auswerteformel Ks = (a · L) / (A · t) · ln(H₀ / H). Die Zeit, in der sich H halbiert, ist deshalb immer gleich lang, egal bei welchem Stand man beginnt. Entscheidend ist die Höhe der Wassersäule; wie viel Wasser in der Bürette steht, spielt für den Antrieb keine Rolle. Weil die Bürette (a = 4,5 cm²) viel schmaler ist als die Probe, sinkt der Spiegel auch bei kleinem Durchfluss gut messbar.\n\nBEISPIELRECHNUNG (strukturloser Sand)\nAbgelesen: H₀ = 20,00 cm, nach t = 120 s ist H = 12,56 cm.\na · L / A = 4,5 cm² · 5 cm / 50,3 cm² = 0,447 cm\nln(20,00 / 12,56) = 0,465\nKs = 0,447 cm · 0,465 / 120 s = 1,73 · 10⁻³ cm/s; mal 86 400 s/d sind das rund 150 cm/d, wie in der Anzeige.\nEin zweites Wertepaar (t = 240 s, H = 7,88 cm) ergibt denselben Wert. Ks bleibt während der Messung konstant, nur der Antrieb nimmt ab. Bis H = 6 cm sind V = a · (H₀ − H) = 4,5 cm² · 14 cm = 63 cm³ durch die Probe geflossen.\n\nDIE DREI BÖDEN IM VERGLEICH\n- Gut strukturierter toniger Boden: Ks = 600 cm/d, H halbiert sich in etwa 45 s.\n- Strukturloser sandiger Boden: Ks = 150 cm/d, Halbierung in etwa 3 min.\n- Schwach strukturierter toniger Boden: Ks = 3 cm/d, Halbierung in etwa 2,5 h.\nZwischen höchstem und niedrigstem Wert liegt ein Faktor 200, die Halbierungszeiten unterscheiden sich im selben Verhältnis. Entscheidend sind Größe und Verbindung der Poren: Die Leitfähigkeit eines Porenkanals wächst sehr stark mit seinem Durchmesser, bei einer Röhre mit der vierten Potenz des Radius. Im gut strukturierten Ton bilden Schrumpfrisse, Aggregatzwischenräume sowie Wurzel- und Regenwurmgänge ein durchgehendes Netz von Makroporen, das im gesättigten Zustand den Großteil des Wassers führt. Der Sand hat grobe, gut verbundene Zwischenkornporen, aber kein solches Netz. Der Ton ohne Gefüge besitzt fast nur feine Poren mit hohem Fließwiderstand. Die Körnung allein erklärt Ks also nicht: Zwei Tonböden ähnlicher Textur liegen hier wegen ihres Gefüges um einen Faktor 200 auseinander.\n\nWAS KS ÜBER DEN UNGESÄTTIGTEN BODEN AUSSAGT\nKs gilt nur für den vollständig wassergesättigten Boden, den rechten Bereich im K(h)-Diagramm. Trocknet der Boden aus, entleeren sich zuerst die großen Poren. Beim strukturierten Ton bricht K schon bei geringer Saugspannung auf die Matrixkurve ein, beim Sand fällt K nach dem Lufteintrittspunkt steil ab, beim Ton ohne Gefüge bleiben die feinen Poren gefüllt und K sinkt nur langsam. Bei starker Saugspannung leitet dieser Ton sogar besser als der Sand, die Kurven kreuzen sich. Ks allein sagt deshalb wenig darüber, wie ein Boden unter Feldbedingungen Wasser leitet oder wie schnell Regen versickert; dafür braucht man K(h), etwa aus der Verdunstungsmethode, und Angaben zur Vorfeuchte.\n\nGRENZEN DER MESSUNG\nEingeschlossene Luft verkleinert den durchströmten Porenraum, Ks fällt zu klein aus; deshalb wird gründlich aufgesättigt und von unten durchströmt. Ein Spalt zwischen Kern und Zylinderwand lässt Wasser vorbeifließen (Randläufigkeit), Ks fällt zu groß aus. Ein einzelner Regenwurmgang kann eine 250-cm³-Probe dominieren; Ks streut deshalb stark und braucht mehrere Wiederholungen. Die Viskosität des Wassers hängt von der Temperatur ab, Messwerte werden daher auf eine einheitliche Bezugstemperatur umgerechnet. In der Animation laufen die Messungen im Zeitraffer (×10 bis ×706); die echten Messzeiten reichen von gut einer Minute bis zu mehreren Stunden.",
+  "demo": {
+    "studentText": "Bei der KSAT-Messung fließt Wasser aus dem Rohr durch die Bodenprobe. Der Wasserstand im Rohr sinkt am Anfang schnell und dann langsamer, weil weniger Wasser drin ist. Beim Sand waren nach ungefähr 2 Minuten nur noch 12,56 übrig.\nKs ist beim Sand 150 und beim strukturierten Ton 600, beim anderen Ton nur 3. Das liegt daran, dass Ton dichter ist als Sand. Je höher Ks, desto schneller versickert der Regen auch im Feld.",
+    "feedback": {
+      "markers": [
+        {
+          "category": "physik",
+          "quote": "weil weniger Wasser drin ist",
+          "question": "Was genau drückt das Wasser durch die Probe, und wie verändert sich dieser Antrieb, während der Spiegel sinkt?",
+          "nudge": "Schau, welche Rolle H in der Formel unter dem Diagramm spielt, und lies den Glossar-Eintrag zum Darcy-Gesetz."
+        },
+        {
+          "category": "beobachtung",
+          "quote": "nach ungefähr 2 Minuten nur noch 12,56 übrig",
+          "question": "12,56 in welcher Einheit, und gemessen ab welchem Bezugspunkt? Mit welchem genauen Zeitpunkt und welchem Startwert kannst du daraus Ks selbst berechnen?",
+          "nudge": "Halte in Schritt 5 mit Pause an und übernimm H, die verstrichene Zeit und H₀ mit Einheiten aus der Anzeige."
+        },
+        {
+          "category": "boden",
+          "quote": "Das liegt daran, dass Ton dichter ist als Sand.",
+          "question": "Wie passt diese Erklärung zum gut strukturierten Ton, der von allen drei Böden den höchsten Wert hat? Was unterscheidet die beiden Tonböden, obwohl ihre Körnung ähnlich ist?",
+          "nudge": "Vergleiche die Probe der beiden Tonböden in der 3D-Ansicht und lies im Glossar nach, was das Gefüge eines Bodens ist."
+        },
+        {
+          "category": "boden",
+          "quote": "Je höher Ks, desto schneller versickert der Regen auch im Feld.",
+          "question": "Ist der Boden im Feld beim Regen meistens gesättigt? Was zeigt das Diagramm über die Reihenfolge der Böden, wenn sie trockener werden?",
+          "nudge": "Verfolge die drei Kurven im K(h)-Diagramm von rechts nach links."
+        }
+      ]
+    }
+  }
+}
